@@ -40,19 +40,19 @@ def training(image, class_num, testing):
         contours = np.asarray(contours)
 
         # feature 2, Blobs Detection
-        feature.extend(blobs_features(contours, hierarchy))
+        #feature.extend(blobs_features(contours, hierarchy))
 
         # feature 3, Connected Components
-        feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
+        #feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
 
         # # feature 4, Lower Contour
-        # feature.extend(LowerContourFeatures(line.copy()))
+        feature.extend(LowerContourFeatures(line.copy()))
         #
         # # feature 5, Upper Contour
         # feature.extend(UpperContourFeatures(line.copy()))
 
         # feature 6, Disk Fractal
-        feature.extend(DiskFractal(line.copy()))
+        #feature.extend(DiskFractal(line.copy()))
 
         if not testing:
             all_features.append(feature)

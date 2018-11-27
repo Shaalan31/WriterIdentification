@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy import signal
-img = cv2.imread('iAmDatabase/line3.png')
+img = cv2.imread('iAmDatabase/horst1.png')
 
 
 img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -24,15 +24,33 @@ tester = np.asarray([[0,1,0,1],
 #lower_contour = lower_contour[mask[0]==1]
 #print(lower_contour)
 def LowerContourFeatures(img):
-    #lower_contour = img.shape[0] - 1 - np.argmin(img[::-1], axis=0)
-    lower_contour = img.shape[0] - 1 - np.argmin(img, axis=0)
+    lower_contour = np.argmin(img[::-1], axis=0)
+    #lower_contour = np.argmin(img, axis=0)
+    fig = plt.figure()
+    ax = fig.add_subplot('111')
+    print(np.max(lower_contour),np.argmax(lower_contour))
+    plt.ylim(np.min(lower_contour) - 10, np.max(lower_contour) + 10)
+    plt.xlim(0,lower_contour.shape[0]+10)
+    ax.scatter(np.linspace(0,lower_contour.shape[0],lower_contour.shape[0]),lower_contour,s=1)
 
-    mask = img[lower_contour, np.indices(lower_contour.shape)]
-    mask = 1 - mask
-    lower_contour = lower_contour[mask[0] == 1]
+    mask = img[img.shape[0] - 1 - lower_contour, np.indices(lower_contour.shape)]
+    print(mask)
+    print(lower_contour)
+
+
+    lower_contour = lower_contour[mask[0] == 0]
     diff = np.append(np.asarray([0]),np.diff(lower_contour))
-    diff[np.abs(diff)<4]=0
+
+
+    diff[np.abs(diff)<2]=0
+    diff[diff<0] -= 1
+
+
+    #diff[diff<-3] +=1
+
+
     change = np.cumsum(diff)
+    print(lower_contour,change,diff)
     lower_contour = lower_contour - change
     slope, intercept, r_value, p_value, std_err = stats.linregress(x=np.linspace(0,lower_contour.shape[0],lower_contour.shape[0]),y=lower_contour)
     print(slope,std_err)
@@ -48,7 +66,7 @@ def LowerContourFeatures(img):
             minIndex = i-5
         slopeMax,_,_,_,_ =  stats.linregress(x=np.linspace(0,i-minIndex+1,i-minIndex+1),y=lower_contour[minIndex:i+1])
         max_slope+=slopeMax
-    average_slope_max=slopeMax/len(local_max)
+    #average_slope_max=max_slope/len(local_max)
     for i in local_min:
         if(i>len(lower_contour)-5):
             maxIndex = len(lower_contour)
@@ -57,27 +75,38 @@ def LowerContourFeatures(img):
         slopeMin,_,_,_,_ =  stats.linregress(x=np.linspace(0,-i+maxIndex,-i+maxIndex),y=lower_contour[i:maxIndex])
         min_slope+=slopeMin
 
-    average_slope_min=slopeMin/len(local_min)
+    #average_slope_min=min_slope/len(local_min)
     max_ratio = len(local_max)/lower_contour.shape[0]
     min_ratio = len(local_min)/lower_contour.shape[0]
 
-    return [slope,std_err,len(local_max),len(local_min),average_slope_max,average_slope_min,max_ratio,min_ratio]
-    #fig = plt.figure()
-    #ax = fig.add_subplot('111')
-    #plt.ylim(0, 100)
-    #plt.xlim(0,200)
-    #ax.scatter(np.linspace(0,lower_contour.shape[0],lower_contour.shape[0]),lower_contour,s=1)
-    #plt.show()
+    #return [slope,std_err,len(local_max),len(local_min),average_slope_max,average_slope_min,max_ratio,min_ratio]
+    fig = plt.figure()
+    ax = fig.add_subplot('111')
+    print(np.max(lower_contour),np.argmax(lower_contour))
+    #plt.ylim(np.min(lower_contour) - 10, np.max(lower_contour) + 10)
+    plt.xlim(0,lower_contour.shape[0]+10)
+    plt.ylim(0,lower_contour.shape[0]+10)
+
+    ax.scatter(np.linspace(0,lower_contour.shape[0],lower_contour.shape[0]),lower_contour,s=1)
+    plt.show()
 
 def UpperContourFeatures(img):
-    upper_contour = img.shape[0] - 1 - np.argmin(img[::-1], axis=0)
+    upper_contour = np.argmin(img, axis=0)
     #lower_contour = img.shape[0] - 1 - np.argmin(img, axis=0)
-
+    print(upper_contour)
+    fig = plt.figure()
+    ax = fig.add_subplot('111')
+    plt.ylim(np.min(upper_contour) - 10, np.max(upper_contour) + 10)
+    plt.xlim(0,upper_contour.shape[0]+10)
+    ax.scatter(np.linspace(0,upper_contour.shape[0],upper_contour.shape[0]),upper_contour,s=1)
+    plt.show()
     mask = img[upper_contour, np.indices(upper_contour.shape)]
-    mask = 1 - mask
-    upper_contour = upper_contour[mask[0] == 1]
+    upper_contour = upper_contour[mask[0] == 0]
+    print(upper_contour)
+
+
     diff = np.append(np.asarray([0]),np.diff(upper_contour))
-    diff[np.abs(diff)<4]=0
+    diff[np.abs(diff)<2]=0
     change = np.cumsum(diff)
     upper_contour = upper_contour - change
     slope, intercept, r_value, p_value, std_err = stats.linregress(x=np.linspace(0,upper_contour.shape[0],upper_contour.shape[0]),y=upper_contour)
@@ -94,7 +123,7 @@ def UpperContourFeatures(img):
             minIndex = i-5
         slopeMax,_,_,_,_ =  stats.linregress(x=np.linspace(0,i-minIndex+1,i-minIndex+1),y=upper_contour[minIndex:i+1])
         max_slope+=slopeMax
-    average_slope_max=max_slope/len(local_max)
+    #average_slope_max=max_slope/len(local_max)
     for i in local_min:
         if(i>len(upper_contour)-5):
             maxIndex = len(upper_contour)
@@ -103,15 +132,17 @@ def UpperContourFeatures(img):
         slopeMin,_,_,_,_ =  stats.linregress(x=np.linspace(0,-i+maxIndex,-i+maxIndex),y=upper_contour[i:maxIndex])
         min_slope+=slopeMin
 
-    average_slope_min=min_slope/len(local_min)
+    #average_slope_min=min_slope/len(local_min)
     max_ratio = len(local_max)/upper_contour.shape[0]
     min_ratio = len(local_min)/upper_contour.shape[0]
 
-    return [slope,std_err,len(local_max),len(local_min),average_slope_max,average_slope_min,max_ratio,min_ratio]
-    #fig = plt.figure()
-    #ax = fig.add_subplot('111')
-    #plt.ylim(0, 100)
-    #plt.xlim(0,200)
-    #ax.scatter(np.linspace(0,lower_contour.shape[0],lower_contour.shape[0]),lower_contour,s=1)
-    #plt.show()
+    #return [slope,std_err,len(local_max),len(local_min),average_slope_max,average_slope_min,max_ratio,min_ratio]
+    fig = plt.figure()
+    ax = fig.add_subplot('111')
+    plt.ylim(np.min(upper_contour) - 10, np.max(upper_contour) + 10)
+    plt.xlim(0,upper_contour.shape[0]+10)
+    ax.scatter(np.linspace(0,upper_contour.shape[0],upper_contour.shape[0]),upper_contour,s=1)
+    plt.show()
 
+#UpperContourFeatures(img)
+LowerContourFeatures(img)
