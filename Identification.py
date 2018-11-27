@@ -15,23 +15,13 @@ labels = []
 def training(image, class_num, testing):
     # imageRot = adjust_rotation(image=image)
     # imageCropped = crop_paper(imageRot=imageRot)
-
     writerLines = segment(image.copy())
 
     for line in writerLines:
-
-        values, count = np.unique(line, return_counts=True)
-        countBlack = count[0]
-        countWhite = count[1]
-        total = countWhite + countBlack
-        percentageBlack = (countBlack / total) * 100
-        if percentageBlack < 1:
-            continue
-
         feature = []
 
         # feature 1, Angles Histogram
-        feature.extend(AnglesHistogram(line, countBlack))
+        feature.extend(AnglesHistogram(line))
 
         # Calculate Contours
         line = line.astype('uint8')
