@@ -12,8 +12,8 @@ def blobs_features(contours, hierarchy):
     roundness = []
     form_factors = []
 
-    if len(contours) == 0:
-        return [0, 0, 0]
+    # if len(contours) == 0:
+    #     return [0, 0, 0]
     for contour in contours:
         current_area = cv2.contourArea(contour)
         if current_area == 0:
