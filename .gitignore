@@ -9,6 +9,8 @@
 __pycharm__/
 iAmDatabase/
 output/
+venv/
+.idea/
 
 # User-specific stuff
 .idea/**/workspace.xml
