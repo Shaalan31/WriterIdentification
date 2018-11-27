@@ -7,6 +7,8 @@ from UpperContour import *
 from DiskFractal import *
 import glob
 from sklearn import neighbors
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 all_features = []
 labels = []
@@ -21,7 +23,7 @@ def training(image, class_num, testing):
         feature = []
 
         # feature 1, Angles Histogram
-        feature.extend(AnglesHistogram(line))
+        #feature.extend(AnglesHistogram(line))
 
         # Calculate Contours
         line = line.astype('uint8')
@@ -33,16 +35,28 @@ def training(image, class_num, testing):
         #feature.extend(blobs_features(contours, hierarchy))
 
         # feature 3, Connected Components
-        #feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
+        feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
 
         # # feature 4, Lower Contour
-        feature.extend(LowerContourFeatures(line.copy()))
+        #feature.extend(LowerContourFeatures(line.copy()))
         #
         # # feature 5, Upper Contour
         # feature.extend(UpperContourFeatures(line.copy()))
 
         # feature 6, Disk Fractal
         #feature.extend(DiskFractal(line.copy()))
+
+        # feature 7, Ellipse Fractal 45
+        #feature.extend(EllipseFractal(line.copy(),45))
+
+        # feature 8, Ellipse Fractal 90
+        #feature.extend(EllipseFractal(line.copy(),90))
+
+        # feature 9, Ellipse Fractal 135
+        #feature.extend(EllipseFractal(line.copy(),135))
+
+        # feature 10, Ellipse Fractal 0
+        #feature.extend(EllipseFractal(line.copy(),0))
 
         if not testing:
             all_features.append(feature)
@@ -86,4 +100,7 @@ for filename in glob.glob('iAmDatabase/test/*.png'):
     all_features_test = []
     training(image, -1, True)
     testCase = np.average(all_features_test, axis=0)
+
+    for item in all_features_test:
+        print(classifier.predict(np.asarray(item).reshape(1, -1)))
     print(classifier.predict(np.asarray(testCase).reshape(1, -1)))

@@ -145,4 +145,4 @@ def UpperContourFeatures(img):
     plt.show()
 
 #UpperContourFeatures(img)
-LowerContourFeatures(img)
+#LowerContourFeatures(img)
