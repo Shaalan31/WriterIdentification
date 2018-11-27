@@ -32,7 +32,8 @@ def ConnectedComponents(contours, hierarchy, img):
     if math.isnan(word_dist):
         word_dist = 0
     within_word_dist = np.average(np.abs(diff_dist_word[np.where(diff_dist_word < threshold)]))
-
+    if math.isnan(within_word_dist):
+        within_word_dist = 0
     total_transitions = 0
     img = img / 255
     for x, y, w, h, a in bounding_rect_sorted:
@@ -42,7 +43,6 @@ def ConnectedComponents(contours, hierarchy, img):
         h = int(h)
         total_transitions += np.sum(np.abs(np.diff(img[y:y + h, x:x + w])))
     total_transitions /= (2 * bounding_rect_sorted.shape[0])
-
     sdW = np.sqrt(np.var(bounding_rect_sorted[:, 2]))
     MedianW = np.median(bounding_rect_sorted[:, 2])
     AverageW = np.average(bounding_rect_sorted[:, 2])
