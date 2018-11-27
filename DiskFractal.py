@@ -65,7 +65,7 @@ def DiskFractal(img, loops=25):
         img_dilate = cv2.erode(img.copy(), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * x - 1, 2 * x - 1)),
                                iterations=1)
         arr[x] = ([np.log(x), np.log(np.sum(255 - img_dilate) / 255) - np.log(x)])
-        cv2.imwrite('iAmDatabase/boxes_' + str(x) + '.png', img_dilate)
+        # cv2.imwrite('iAmDatabase/boxes_' + str(x) + '.png', img_dilate)
     error = 999
     slope = [0, 0, 0]
     loops = int(loops)

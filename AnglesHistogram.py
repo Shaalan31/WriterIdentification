@@ -2,8 +2,10 @@ from commonfunctions import *
 import skimage.filters as filters
 
 
-def AnglesHistogram(image, countBlack):
-    # imageGray = rgb2gray(image)
+def AnglesHistogram(image):
+    values, count = np.unique(image, return_counts=True)
+    countBlack = count[0]
+
     sob_img_v = np.multiply(filters.sobel_v(image), 255)
     sob_img_h = np.multiply(filters.sobel_h(image), 255)
 
@@ -13,7 +15,6 @@ def AnglesHistogram(image, countBlack):
     angles = np.round(angles)
 
     anglesHist = []
-    # Show angles between 30 and 60 degrees
     angle1 = 10
     angle2 = 40
     while angle2 < 180:
