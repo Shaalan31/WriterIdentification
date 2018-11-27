@@ -86,8 +86,9 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
-output/*.png
-output/*.jpg
-output/*.jpeg
+
+*.png
+*.jpg
+*.jpeg
 *.pyc
 # End of https://www.gitignore.io/api/pycharm
