@@ -12,10 +12,13 @@ def segment(image):
     imageGray = gaussian(imageGray, 1)
 
     # Thresholding
-    threshold = threshold_otsu(imageGray * 255)
-    imageGray[(imageGray * 255 > threshold)] = 255
-    imageGray[(imageGray * 255 <= threshold)] = 0
+    imageGray *= 255
+    threshold = threshold_otsu(imageGray)
+    imageGray[(imageGray > threshold)] = 255
+    imageGray[(imageGray <= threshold)] = 0
     imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
+
+    io.imsave("arabic.png", imageGray.astype('uint8'))
 
     # get count of black pixels for each row
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))

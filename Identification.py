@@ -8,27 +8,24 @@ from DiskFractal import *
 import glob
 from sklearn import neighbors
 import warnings
+
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Global Variables
 all_features = []
 all_features = np.asarray(all_features)
-
 all_features_class = []
 all_features_class = np.asarray(all_features_class)
-
 all_features_test = []
 all_features_test = np.asarray(all_features_test)
-
 labels = []
-temp=[]
+temp = []
 blob_starting_index = 5
-
 num_training_examples = 0
 num_testing_examples = 0
 num_features = 18
-
 num_lines_per_class = 0
+num_classes = 14
 
 
 def training(image, class_num, testing):
@@ -40,8 +37,8 @@ def training(image, class_num, testing):
     global num_training_examples
     global num_testing_examples
 
-    # imageRot = adjust_rotation(image=image)
-    # imageCropped = crop_paper(imageRot=imageRot)
+    image = adjust_rotation(image=image)
+
     writerLines = segment(image.copy())
 
     num_lines_per_class += len(writerLines)
@@ -49,7 +46,7 @@ def training(image, class_num, testing):
         feature = []
 
         # feature 1, Angles Histogram
-        #feature.extend(AnglesHistogram(line))
+        feature.extend(AnglesHistogram(line))
 
         # Calculate Contours
         line = line.astype('uint8')
@@ -58,31 +55,31 @@ def training(image, class_num, testing):
         contours = np.asarray(contours)
 
         # feature 2, Blobs Detection
-        #feature.extend(blobs_features(contours, hierarchy))
+        feature.extend(blobs_features(contours, hierarchy))
 
         # feature 3, Connected Components
         feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
 
         # # feature 4, Lower Contour
-        #feature.extend(LowerContourFeatures(line.copy()))
+        # feature.extend(LowerContourFeatures(line.copy()))
         #
         # # feature 5, Upper Contour
         # feature.extend(UpperContourFeatures(line.copy()))
 
         # feature 6, Disk Fractal
-        #feature.extend(DiskFractal(line.copy()))
+        feature.extend(DiskFractal(line.copy()))
 
         # feature 7, Ellipse Fractal 45
-        #feature.extend(EllipseFractal(line.copy(),45))
+        # feature.extend(EllipseFractal(line.copy(),45))
 
         # feature 8, Ellipse Fractal 90
-        #feature.extend(EllipseFractal(line.copy(),90))
+        # feature.extend(EllipseFractal(line.copy(),90))
 
         # feature 9, Ellipse Fractal 135
-        #feature.extend(EllipseFractal(line.copy(),135))
+        # feature.extend(EllipseFractal(line.copy(),135))
 
         # feature 10, Ellipse Fractal 0
-        #feature.extend(EllipseFractal(line.copy(),0))
+        # feature.extend(EllipseFractal(line.copy(),0))
 
         feature = np.asarray(feature)
 
@@ -117,66 +114,17 @@ def adjustNaNValues(writer_features):
     return writer_features
 
 
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class1/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 1, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features, temp)
-
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class2/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 2, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features, temp)
-
-
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class3/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 3, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features, temp)
-
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class4/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 4, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features, temp)
-
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class5/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 5, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features,temp)
-
-num_lines_per_class = 0
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-for filename in glob.glob('iAmDatabase/class6/*.png'):
-    image = cv2.imread(filename)
-    temp = training(image, 6, False)
-temp = adjustNaNValues(temp)
-temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-all_features = np.append(all_features, temp)
+for class_number in range(1, num_classes):
+    num_lines_per_class = 0
+    all_features_class = []
+    all_features_class = np.asarray(all_features_class)
+    print(class_number)
+    for filename in glob.glob('iAmDatabase/class' + str(class_number) + '/*.png'):
+        image = cv2.imread(filename)
+        temp = training(image, class_number, False)
+    temp = adjustNaNValues(temp)
+    temp = np.reshape(temp, (1, num_lines_per_class * num_features))
+    all_features = np.append(all_features, temp)
 
 all_features = np.reshape(all_features, (num_training_examples, num_features))
 classifier = neighbors.KNeighborsClassifier(n_neighbors=5)

@@ -9,6 +9,12 @@
 __pycharm__/
 iAmDatabase/
 output/
+*.png
+*.jpg
+*.jpeg
+*.pyc
+*.zip
+*.tif
 
 # User-specific stuff
 .idea/
@@ -86,9 +92,4 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
-
-*.png
-*.jpg
-*.jpeg
-*.pyc
 # End of https://www.gitignore.io/api/pycharm
