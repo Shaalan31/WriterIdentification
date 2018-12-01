@@ -1,6 +1,8 @@
 from commonfunctions import *
 from skimage.filters import gaussian
 from skimage.filters import threshold_otsu
+from itertools import groupby
+from operator import itemgetter
 
 
 def segment(image):
@@ -16,12 +18,15 @@ def segment(image):
     threshold = threshold_otsu(imageGray)
     imageGray[(imageGray > threshold)] = 255
     imageGray[(imageGray <= threshold)] = 0
-    imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
 
-    io.imsave("arabic.png", imageGray.astype('uint8'))
+    imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
 
     # get count of black pixels for each row
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
+    # show_images([imageGray])
+
+    imageGray = cropPrinted(imageGray.copy(), black_count)
+    # show_images([imageGray])
 
     # crop_image
     maxRow = 0
@@ -61,3 +66,25 @@ def segment(image):
                     writer_lines.append(line)
                 foundALine = False
     return writer_lines
+
+
+def cropPrinted(imageGray, blackCount):
+    maskIndexed = np.where((blackCount / imageGray.shape[1]) > 0.2)[0]
+    tempImage = imageGray[maskIndexed]
+    indices = []
+    for i in range(0, len(tempImage)):
+        array = [x[0] for x in groupby(tempImage[i, :])]
+        if (len(array) == 3 or len(array) == 5) and array[0] == 255 and array[len(array) - 1] == 255:
+            indices.append(maskIndexed[i])
+
+    indicesNew = []
+    for i in range(len(indices) - 2, -1, -1):
+        if np.abs(indices[i] - indices[i + 1]) < 10:
+            continue
+        else:
+            indicesNew.append(indices[i] + 1)
+            indicesNew.append(indices[i + 1] - 1)
+            break
+    if len(indicesNew) == 0:
+        return imageGray
+    return imageGray[indicesNew[0]:indicesNew[1], :]

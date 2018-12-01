@@ -8,6 +8,7 @@ from DiskFractal import *
 import glob
 from sklearn import neighbors
 import warnings
+from sklearn.decomposition import PCA
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -25,7 +26,7 @@ num_training_examples = 0
 num_testing_examples = 0
 num_features = 18
 num_lines_per_class = 0
-num_classes = 14
+num_classes = 3
 
 
 def training(image, class_num, testing):
@@ -37,7 +38,7 @@ def training(image, class_num, testing):
     global num_training_examples
     global num_testing_examples
 
-    image = adjust_rotation(image=image)
+    # image = adjust_rotation(image=image)
 
     writerLines = segment(image.copy())
 
@@ -55,7 +56,7 @@ def training(image, class_num, testing):
         contours = np.asarray(contours)
 
         # feature 2, Blobs Detection
-        feature.extend(blobs_features(contours, hierarchy))
+        feature.extend(blobs_features(contours, hierarchy,image.shape))
 
         # feature 3, Connected Components
         feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
@@ -114,12 +115,21 @@ def adjustNaNValues(writer_features):
     return writer_features
 
 
-for class_number in range(1, num_classes):
+def performPCA(allFeatures):
+    allFeaturesY = allFeatures - np.mean(allFeatures, axis=0)
+    print(allFeaturesY)
+    pca = PCA(n_components=18)
+    components = pca.fit_transform(allFeaturesY)
+    print(components)
+    return components
+
+
+for class_number in range(1, num_classes + 1):
     num_lines_per_class = 0
     all_features_class = []
     all_features_class = np.asarray(all_features_class)
     print(class_number)
-    for filename in glob.glob('iAmDatabase/class' + str(class_number) + '/*.png'):
+    for filename in glob.glob('TestCases/Class' + str(class_number) + '/*.png'):
         image = cv2.imread(filename)
         temp = training(image, class_number, False)
     temp = adjustNaNValues(temp)
@@ -127,14 +137,17 @@ for class_number in range(1, num_classes):
     all_features = np.append(all_features, temp)
 
 all_features = np.reshape(all_features, (num_training_examples, num_features))
+# performPCA(all_features)
 classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
 classifier.fit(all_features, labels)
 
-for filename in glob.glob('iAmDatabase/test/*.png'):
+for filename in glob.glob('TestCases/testing/*.png'):
     print(filename)
     image = cv2.imread(filename)
     all_features_test = []
     all_features_test = np.asarray(all_features_test)
     num_testing_examples = 0
-    testCase = np.average(training(image, -1, True), axis=0)
+    temp = training(image, -1, True)
+    temp = adjustNaNValues(temp)
+    testCase = np.average(temp, axis=0)
     print(classifier.predict(np.asarray(testCase).reshape(1, -1)))
