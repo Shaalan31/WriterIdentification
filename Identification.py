@@ -26,7 +26,7 @@ num_training_examples = 0
 num_testing_examples = 0
 num_features = 17
 num_lines_per_class = 0
-num_classes = 16
+num_classes = 13
 
 
 def training(image, class_num, testing):
@@ -118,11 +118,12 @@ def adjustNaNValues(writer_features):
 
 
 def featureNormalize(X):
+    mean = np.mean(X, axis=0)
     normalized_X = X - np.mean(X, axis=0)
     variances = np.var(normalized_X, axis=0)
     deviation = np.sqrt(variances)
     normalized_X = np.divide(normalized_X, deviation)
-    return normalized_X
+    return normalized_X, mean, deviation
 
 
 def performPCA(allFeatures):
@@ -164,13 +165,15 @@ def performPCA(allFeatures):
 
 correctAnswers = 0
 totalAnswers = 0
-class_labels = [x for x in range(6, num_classes + 1)]
+class_labels = [x for x in range(2, num_classes + 1)]
 classCombinations = list(combinations(class_labels, r=3))
 
 avgTime = 0
 for test_combination in classCombinations:
     print(test_combination)
     millis = int(round(time.time() * 1000))
+    mue = 0
+    sigma = 0
     for class_number in test_combination:
         num_lines_per_class = 0
         all_features_class = []
@@ -183,7 +186,7 @@ for test_combination in classCombinations:
         all_features = np.append(all_features, temp)
 
     all_features = np.reshape(all_features, (num_training_examples, num_features))
-    # all_features = featureNormalize(all_features)
+    all_features,mue,sigma = featureNormalize(all_features)
     classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
     classifier.fit(all_features, labels)
     labels = []
@@ -199,7 +202,8 @@ for test_combination in classCombinations:
             num_testing_examples = 0
             temp = training(image, -1, True)
             temp = adjustNaNValues(temp)
-            # temp = featureNormalize(temp)
+            #temp,_,_ = featureNormalize(temp)
+            temp = (temp - mue)/sigma
             testCase = np.average(temp, axis=0)
             prediction = classifier.predict(np.asarray(testCase).reshape(1, -1))
             print(prediction)

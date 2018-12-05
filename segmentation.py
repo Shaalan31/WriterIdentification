@@ -88,3 +88,17 @@ def cropPrinted(imageGray, blackCount):
     if len(indicesNew) == 0:
         return imageGray
     return imageGray[indicesNew[0]:indicesNew[1], :]
+
+
+def crop_shaalan(img):
+    horizontal = np.copy(img)
+
+        # Specify size on horizontal axis
+    cols = horizontal.shape[1]
+    horizontal_size = int(cols / 15)
+        # Create structure element for extracting horizontal lines through morphology operations
+    horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
+        # Apply morphology operations
+    horizontal = cv2.erode(horizontal, horizontalStructure)
+    horizontal = cv2.dilate(horizontal, horizontalStructure)
+    print(horizontal)
