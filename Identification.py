@@ -9,6 +9,8 @@ import glob
 from sklearn import neighbors
 import warnings
 from sklearn.decomposition import PCA
+from itertools import combinations
+import time
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -24,9 +26,9 @@ temp = []
 blob_starting_index = 5
 num_training_examples = 0
 num_testing_examples = 0
-num_features = 18
+num_features = 17
 num_lines_per_class = 0
-num_classes = 3
+num_classes = 16
 
 
 def training(image, class_num, testing):
@@ -39,6 +41,8 @@ def training(image, class_num, testing):
     global num_testing_examples
 
     # image = adjust_rotation(image=image)
+    if image.shape[0] > 3500:
+        image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
 
     writerLines = segment(image.copy())
 
@@ -56,7 +60,7 @@ def training(image, class_num, testing):
         contours = np.asarray(contours)
 
         # feature 2, Blobs Detection
-        feature.extend(blobs_features(contours, hierarchy,image.shape))
+        feature.extend(blobs_features(contours, hierarchy, image.shape))
 
         # feature 3, Connected Components
         feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
@@ -115,6 +119,14 @@ def adjustNaNValues(writer_features):
     return writer_features
 
 
+def featureNormalize(X):
+    normalized_X = X - np.mean(X, axis=0)
+    variances = np.var(normalized_X, axis=0)
+    deviation = np.sqrt(variances)
+    normalized_X = np.divide(normalized_X, deviation)
+    return normalized_X
+
+
 def performPCA(allFeatures):
     allFeaturesY = allFeatures - np.mean(allFeatures, axis=0)
     print(allFeaturesY)
@@ -124,30 +136,92 @@ def performPCA(allFeatures):
     return components
 
 
-for class_number in range(1, num_classes + 1):
-    num_lines_per_class = 0
-    all_features_class = []
-    all_features_class = np.asarray(all_features_class)
-    print(class_number)
-    for filename in glob.glob('TestCases/Class' + str(class_number) + '/*.png'):
-        image = cv2.imread(filename)
-        temp = training(image, class_number, False)
-    temp = adjustNaNValues(temp)
-    temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-    all_features = np.append(all_features, temp)
+# for class_number in range(1, num_classes + 1):
+#     num_lines_per_class = 0
+#     all_features_class = []
+#     all_features_class = np.asarray(all_features_class)
+#     print(class_number)
+#     for filename in glob.glob('TestCases/Class' + str(class_number) + '/*.png'):
+#         image = cv2.imread(filename)
+#         temp = training(image, class_number, False)
+#     temp = adjustNaNValues(temp)
+#     temp = np.reshape(temp, (1, num_lines_per_class * num_features))
+#     all_features = np.append(all_features, temp)
+#
+# all_features = np.reshape(all_features, (num_training_examples, num_features))
+# # performPCA(all_features)
+# classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
+# classifier.fit(all_features, labels)
+#
+# for filename in glob.glob('TestCases/testing/*.png'):
+#     print(filename)
+#     image = cv2.imread(filename)
+#     all_features_test = []
+#     all_features_test = np.asarray(all_features_test)
+#     num_testing_examples = 0
+#     temp = training(image, -1, True)
+#     temp = adjustNaNValues(temp)
+#     testCase = np.average(temp, axis=0)
+#     print(classifier.predict(np.asarray(testCase).reshape(1, -1)))
 
-all_features = np.reshape(all_features, (num_training_examples, num_features))
-# performPCA(all_features)
-classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
-classifier.fit(all_features, labels)
+correctAnswers = 0
+totalAnswers = 0
+class_labels = [x for x in range(6, num_classes + 1)]
+classCombinations = list(combinations(class_labels, r=3))
 
-for filename in glob.glob('TestCases/testing/*.png'):
-    print(filename)
-    image = cv2.imread(filename)
-    all_features_test = []
-    all_features_test = np.asarray(all_features_test)
-    num_testing_examples = 0
-    temp = training(image, -1, True)
-    temp = adjustNaNValues(temp)
-    testCase = np.average(temp, axis=0)
-    print(classifier.predict(np.asarray(testCase).reshape(1, -1)))
+avgTime = 0
+for test_combination in classCombinations:
+    print(test_combination)
+    millis = int(round(time.time() * 1000))
+    for class_number in test_combination:
+        num_lines_per_class = 0
+        all_features_class = []
+        all_features_class = np.asarray(all_features_class)
+        for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
+            image = cv2.imread(filename)
+            temp = training(image, class_number, False)
+        temp = adjustNaNValues(temp)
+        temp = np.reshape(temp, (1, num_lines_per_class * num_features))
+        all_features = np.append(all_features, temp)
+
+    all_features = np.reshape(all_features, (num_training_examples, num_features))
+    # all_features = featureNormalize(all_features)
+    classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
+    classifier.fit(all_features, labels)
+    labels = []
+    all_features = []
+    num_training_examples = 0
+    localCorrect = 0
+    for class_number in test_combination:
+        for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
+            print(filename)
+            image = cv2.imread(filename)
+            all_features_test = []
+            all_features_test = np.asarray(all_features_test)
+            num_testing_examples = 0
+            temp = training(image, -1, True)
+            temp = adjustNaNValues(temp)
+            # temp = featureNormalize(temp)
+            testCase = np.average(temp, axis=0)
+            prediction = classifier.predict(np.asarray(testCase).reshape(1, -1))
+            print(prediction)
+            if prediction == class_number:
+                localCorrect += 1
+                correctAnswers += 1
+            else:
+                file = open("wrngClassified.txt", "a")
+                file.write(str(test_combination))
+
+                file.write('\n')
+                file.close()
+            totalAnswers += 1
+    print(localCorrect * 100 / 3)
+    print((int(round(time.time() * 1000)) - millis) / 60000)
+    avgTime += (int(round(time.time() * 1000)) - millis)
+    print("-----------------------------------------------------------------")
+print("Average Time:")
+print(avgTime / (totalAnswers * 60000))
+print("-----------------------------------------------------------------")
+
+accuracy = (correctAnswers / totalAnswers) * 100
+print(accuracy)

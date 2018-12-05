@@ -25,7 +25,7 @@ def segment(image):
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
     # show_images([imageGray])
 
-    imageGray = cropPrinted(imageGray.copy(), black_count)
+    # imageGray = cropPrinted(imageGray.copy(), black_count)
     # show_images([imageGray])
 
     # crop_image
@@ -61,7 +61,7 @@ def segment(image):
                 if line_index - line_start > 50:
                     line = imageGray[line_start:line_index, :].astype('uint8')
                     line = cv2.copyMakeBorder(line, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=[255, 255, 255])
-                    io.imsave('output/image' + str(imgName) + '.png', line)
+                    # io.imsave('output/image' + str(imgName) + '.png', line)
                     imgName += 1
                     writer_lines.append(line)
                 foundALine = False
