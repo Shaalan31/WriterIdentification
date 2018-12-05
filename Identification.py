@@ -1,9 +1,7 @@
-from AdjustRotation import *
 from segmentation import *
 from AnglesHistogram import *
 from BlobsDetection import *
 from ConnectedComponents import *
-from UpperContour import *
 from DiskFractal import *
 import glob
 from sklearn import neighbors
