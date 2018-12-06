@@ -99,6 +99,9 @@ def crop_shaalan(img):
         # Create structure element for extracting horizontal lines through morphology operations
     horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
         # Apply morphology operations
-    horizontal = cv2.erode(horizontal, horizontalStructure)
     horizontal = cv2.dilate(horizontal, horizontalStructure)
+	horizontal = cv2.erode(horizontal, horizontalStructure)
+	sum = np.sum(horizontal,axis=1)
+	sum[sum>0]=1
+	
     print(horizontal)
