@@ -3,16 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy import signal
-img = cv2.imread('iAmDatabase/horst1.png')
 
-
-img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-img[img<180] = 0
-img[img>=180] = 1
-
-tester = np.asarray([[0,1,0,1],
-                      [0,1,0,1],
-                      [0,1,1,0]])
+# img = cv2.imread('iAmDatabase/horst1.png')
+#
+#
+# img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+# img[img<180] = 0
+# img[img>=180] = 1
+#
+# tester = np.asarray([[0,1,0,1],
+#                       [0,1,0,1],
+#                       [0,1,1,0]])
 
 #print(tester.shape[0] - 1 - np.argmin(tester[::-1],axis=0))
 #print(tester.shape[0] - 1 - np.argmin(tester,axis=0))

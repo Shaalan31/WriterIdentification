@@ -47,4 +47,4 @@ def ConnectedComponents(contours, hierarchy, img):
     MedianW = np.median(bounding_rect_sorted[:, 2])
     AverageW = np.average(bounding_rect_sorted[:, 2])
 
-    return np.asarray([word_dist, within_word_dist, total_transitions, sdW, MedianW, AverageW, threshold])
+    return np.asarray([word_dist, within_word_dist, total_transitions, sdW, MedianW, AverageW])
