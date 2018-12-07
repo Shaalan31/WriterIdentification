@@ -5,6 +5,7 @@ from itertools import groupby
 from operator import itemgetter
 
 
+
 def segment(image):
     image = remove_shadow(image)
 
@@ -21,6 +22,8 @@ def segment(image):
 
     imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
 
+    top,bottom = extract_text(imageGray)
+    imageGray = imageGray[top:bottom,:]
     # get count of black pixels for each row
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
     # show_images([imageGray])
@@ -29,6 +32,7 @@ def segment(image):
     # show_images([imageGray])
 
     # crop_image
+
     maxRow = 0
     for i in range(len(black_count) - 1, -1, -1):
         if (black_count[i] / imageGray.shape[1]) * 100 > 1:
@@ -90,15 +94,19 @@ def cropPrinted(imageGray, blackCount):
     return imageGray[indicesNew[0]:indicesNew[1], :]
 
 
-def crop_shaalan(img):
+def extract_text(img):
     horizontal = np.copy(img)
-
-        # Specify size on horizontal axis
     cols = horizontal.shape[1]
     horizontal_size = int(cols / 15)
-        # Create structure element for extracting horizontal lines through morphology operations
     horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
-        # Apply morphology operations
-    horizontal = cv2.erode(horizontal, horizontalStructure)
     horizontal = cv2.dilate(horizontal, horizontalStructure)
-    print(horizontal)
+    horizontal = cv2.erode(horizontal, horizontalStructure)
+    horizontal = 255 - horizontal
+    horizontal /= 255
+    sum = np.sum(horizontal,axis=1)
+    sum[sum < int(cols / 10)] = 0
+    sum[sum > int(cols / 10)] = 1
+    half = int(sum.shape[0]/2)
+    top_boundary = half - np.argmax(sum[half:0:-1])
+    bottom_boundary = half + np.argmax(sum[half:])
+    return top_boundary+2,bottom_boundary
