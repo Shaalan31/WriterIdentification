@@ -78,7 +78,7 @@ def rotateImage(image):
     # convert the image to grayscale, blur it, and find edges
     # in the image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    gray = cv2.GaussianBlur(gray, (5, 5), 1)
     edged = cv2.Canny(gray, 75, 150)
 
     # show the original image and the edge detected image
@@ -96,6 +96,7 @@ def rotateImage(image):
 
     # loop over the contours
     screenCnt = None
+    maxarea = 0
     for c in cnts:
         # approximate the contour
         peri = cv2.arcLength(c, True)
@@ -103,42 +104,14 @@ def rotateImage(image):
 
         # if our approximated contour has four points, then we
         # can assume that we have found our screen
+        rect = cv2.minAreaRect(c)
+        box = cv2.boxPoints(rect)
+        # convert all coordinates floating point values to int
+        box = np.int0(box)
+        x, y, w, h = cv2.boundingRect(c)
+
         if len(approx) == 4:
             screenCnt = approx
-            break
-    if screenCnt is None:
-
-        gray2 = cv2.equalizeHist(gray)
-        gray = cv2.GaussianBlur(gray2, (5, 5), 0)
-        edged = cv2.Canny(gray, 75, 200)
-        gray = gray2
-        # show the original image and the edge detected image
-        print("STEP 1: Edge Detection")
-        cv2.imshow("Image", image)
-        cv2.imshow("Edged", edged)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        # find the contours in the edged image, keeping only the
-        # largest ones, and initialize the screen contour
-        cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = imutils.grab_contours(cnts)
-        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
-
-        # loop over the contours
-        for c in cnts:
-            # approximate the contour
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-
-            # if our approximated contour has four points, then we
-            # can assume that we have found our screen
-            if len(approx) == 4:
-                screenCnt = approx
-                break
-
-    if screenCnt is None:
-        return image
 
     # show the contour (outline) of the piece of paper
     print("STEP 2: Find contours of paper")
