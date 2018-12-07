@@ -92,15 +92,11 @@ def cropPrinted(imageGray, blackCount):
     return imageGray[indicesNew[0]:indicesNew[1], :]
 
 
-def crop_shaalan(img):
+def extract_text(img):
     horizontal = np.copy(img)
-
-        # Specify size on horizontal axis
     cols = horizontal.shape[1]
     horizontal_size = int(cols / 15)
-        # Create structure element for extracting horizontal lines through morphology operations
     horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_size, 1))
-        # Apply morphology operations
     horizontal = cv2.dilate(horizontal, horizontalStructure)
     horizontal = cv2.erode(horizontal, horizontalStructure)
     horizontal = 255 - horizontal
@@ -108,33 +104,7 @@ def crop_shaalan(img):
     sum = np.sum(horizontal,axis=1)
     sum[sum < int(cols / 10)] = 0
     sum[sum > int(cols / 10)] = 1
-
     half = int(sum.shape[0]/2)
     top_boundary = half - np.argmax(sum[half:0:-1])
     bottom_boundary = half + np.argmax(sum[half:])
-    print(top_boundary,half-top_boundary,bottom_boundary,half)
     return top_boundary+2,bottom_boundary,horizontal
-
-image = cv2.imread('iAmDatabase/test.png')
-
-
-for filename in glob.glob('segment/*.png'):
-    image = cv2.imread(filename)
-    image = remove_shadow(image)
-
-    imageGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Noise removal with gaussian
-    imageGray = gaussian(imageGray, 1)
-
-    # Thresholding
-    imageGray *= 255
-    threshold = threshold_otsu(imageGray)
-    imageGray[(imageGray > threshold)] = 255
-    imageGray[(imageGray <= threshold)] = 0
-
-    t, b , h = crop_shaalan(imageGray)
-    cv2.imwrite('test/'+filename, imageGray[t:b, :])
-    cv2.imwrite('test.png', imageGray[1771:0:-1, :])
-    cv2.imwrite('h/'+filename, h)
-
