@@ -78,8 +78,16 @@ def rotateImage(image):
     # convert the image to grayscale, blur it, and find edges
     # in the image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (5, 5), 1)
-    edged = cv2.Canny(gray, 75, 150)
+    #gray = cv2.GaussianBlur(gray, (5, 5), 1)
+
+    gray = cv2.bilateralFilter(gray, 9, 75, 75)
+
+    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 115, 4)
+    # Median filter clears small details
+    gray = cv2.medianBlur(gray, 11)
+    # Add black border in case that page is touching an image border
+    gray = cv2.copyMakeBorder(gray, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    edged = cv2.Canny(gray, 200, 250)
 
     # show the original image and the edge detected image
     print("STEP 1: Edge Detection")
@@ -112,6 +120,7 @@ def rotateImage(image):
 
         if len(approx) == 4:
             screenCnt = approx
+
 
     # show the contour (outline) of the piece of paper
     print("STEP 2: Find contours of paper")
