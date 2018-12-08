@@ -7,38 +7,51 @@ from AdjustRotation import *
 import glob
 from sklearn import neighbors
 import warnings
-from sklearn.decomposition import PCA
 from itertools import combinations
 import time
-import pandas as pd
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Global Variables
-all_features = []
-all_features = np.asarray(all_features)
-all_features_class = []
-all_features_class = np.asarray(all_features_class)
-all_features_test = []
-all_features_test = np.asarray(all_features_test)
+all_features = np.asarray([])
+all_features_class = np.asarray([])
 labels = []
 temp = []
 blob_starting_index = 5
 num_training_examples = 0
-num_testing_examples = 0
-num_features = 17
+num_features = 18
 num_lines_per_class = 0
 num_classes = 19
 
 
-def training(image, class_num, testing):
-    global all_features
-    global all_features_test
-    global all_features_class
-    global labels
-    global num_lines_per_class
-    global num_training_examples
-    global num_testing_examples
+def feature_extraction(example, image_shape):
+    example = example.astype('uint8')
+    example_copy = example.copy()
+
+    feature = []
+
+    # feature 1, Angles Histogram
+    feature.extend(AnglesHistogram(example))
+
+    # Calculate Contours
+    _, contours, hierarchy = cv2.findContours(example_copy, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    hierarchy = hierarchy[0]
+    contours = np.asarray(contours)
+
+    # feature 2, Blobs Detection
+    feature.extend(blobs_features(contours, hierarchy, image_shape))
+
+    # feature 3, Connected Components
+    feature.extend(ConnectedComponents(contours, hierarchy, example_copy))
+
+    # feature 4, Disk Fractal
+    feature.extend(DiskFractal(example_copy))
+
+    return np.asarray(feature)
+
+
+def test(image, clf, mu, sigma):
+    all_features_test = np.asarray([])
 
     if image.shape[0] > 3500:
         image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
@@ -47,61 +60,46 @@ def training(image, class_num, testing):
     # show_images([image], ["rotation"])
     writerLines = segment(image.copy())
 
+    shape = image.shape
+    num_testing_examples = 0
+    for line in writerLines:
+        example = feature_extraction(line, shape)
+        all_features_test = np.append(all_features_test, example)
+        num_testing_examples += 1
+
+    all_features_test = (adjustNaNValues(
+        np.reshape(all_features_test, (num_testing_examples, num_features))) - mu) / sigma
+
+    # Predict on each line
+    predictions = []
+    for example in all_features_test:
+        predictions.append(clf.predict(np.asarray(example).reshape(1, -1)))
+    values, counts = np.unique(np.asarray(predictions), return_counts=True)
+    return values[np.argmax(counts)]
+
+
+def training(image, class_num):
+    global all_features
+    global all_features_class
+    global labels
+    global num_lines_per_class
+    global num_training_examples
+
+    if image.shape[0] > 3500:
+        image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
+
+    # image = adjust_rotation(image=image)
+    # show_images([image], ["rotation"])
+    writerLines = segment(image.copy())
+
+    shape = image.shape
     num_lines_per_class += len(writerLines)
     for line in writerLines:
-        feature = []
-        # show_images([line], ["line"])
-        # feature 1, Angles Histogram
-        feature.extend(AnglesHistogram(line))
+        all_features_class = np.append(all_features_class, feature_extraction(line, shape))
+        labels.append(class_num)
+        num_training_examples += 1
 
-        # Calculate Contours
-        line = line.astype('uint8')
-        _, contours, hierarchy = cv2.findContours(line.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        hierarchy = hierarchy[0]
-        contours = np.asarray(contours)
-
-        # feature 2, Blobs Detection
-        feature.extend(blobs_features(contours, hierarchy, image.shape))
-
-        # feature 3, Connected Components
-        feature.extend(ConnectedComponents(contours, hierarchy, line.copy()))
-
-        # # feature 4, Lower Contour
-        # feature.extend(LowerContourFeatures(line.copy()))
-        #
-        # # feature 5, Upper Contour
-        # feature.extend(UpperContourFeatures(line.copy()))
-
-        # feature 6, Disk Fractal
-        feature.extend(DiskFractal(line.copy()))
-
-        # feature 7, Ellipse Fractal 45
-        # feature.extend(EllipseFractal(line.copy(),45))
-
-        # feature 8, Ellipse Fractal 90
-        # feature.extend(EllipseFractal(line.copy(),90))
-
-        # feature 9, Ellipse Fractal 135
-        # feature.extend(EllipseFractal(line.copy(),135))
-
-        # feature 10, Ellipse Fractal 0
-        # feature.extend(EllipseFractal(line.copy(),0))
-
-        feature = np.asarray(feature)
-
-        if not testing:
-            all_features_class = np.append(all_features_class, feature)
-            labels.append(class_num)
-            num_training_examples += 1
-        else:
-            all_features_test = np.append(all_features_test, feature)
-            num_testing_examples += 1
-
-    if not testing:
-        return np.reshape(all_features_class, (num_lines_per_class, num_features))
-    else:
-        all_features_test = np.reshape(all_features_test, (num_testing_examples, num_features))
-        return adjustNaNValues(all_features_test)
+    return np.reshape(all_features_class, (num_lines_per_class, num_features))
 
 
 def adjustNaNValues(writer_features):
@@ -123,19 +121,6 @@ def adjustNaNValues(writer_features):
     return writer_features
 
 
-# def adjustNaNValuesVectorized(writer_features):
-#     is_nan_mask = np.isnan(writer_features)
-#     non_nan_indices = np.logical_not(is_nan_mask)
-#     nan_indices = is_nan_mask
-#     if len(nan_indices) > 0:
-#         if len(non_nan_indices) == 0:
-#             feature_mean = 0
-#         else:
-#             feature_mean = np.mean(writer_features[non_nan_indices])
-#         writer_features[nan_indices] = feature_mean
-#     return writer_features
-
-
 def featureNormalize(X):
     mean = np.mean(X, axis=0)
     normalized_X = X - np.mean(X, axis=0)
@@ -145,65 +130,31 @@ def featureNormalize(X):
     return normalized_X, mean, deviation
 
 
-# for class_number in range(1, num_classes + 1):
-#     num_lines_per_class = 0
-#     all_features_class = []
-#     all_features_class = np.asarray(all_features_class)
-#     print(class_number)
-#     for filename in glob.glob('TestCases/Class' + str(class_number) + '/*.png'):
-#         image = cv2.imread(filename)
-#         temp = training(image, class_number, False)
-#     temp = adjustNaNValues(temp)
-#     temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-#     all_features = np.append(all_features, temp)
-#
-# all_features = np.reshape(all_features, (num_training_examples, num_features))
-# # performPCA(all_features)
-# classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
-# classifier.fit(all_features, labels)
-#
-# for filename in glob.glob('TestCases/testing/*.png'):
-#     print(filename)
-#     image = cv2.imread(filename)
-#     all_features_test = []
-#     all_features_test = np.asarray(all_features_test)
-#     num_testing_examples = 0
-#     temp = training(image, -1, True)
-#     temp = adjustNaNValues(temp)
-#     testCase = np.average(temp, axis=0)
-#     print(classifier.predict(np.asarray(testCase).reshape(1, -1)))
-
 correctAnswers = 0
 totalAnswers = 0
 class_labels = [x for x in range(2, num_classes + 1)]
 classCombinations = list(combinations(class_labels, r=3))
+# classCombinations = [(4, 14, 15)]
 avgTime = 0
-muClasses = []
+classifier = neighbors.KNeighborsClassifier(n_neighbors=3)
 
 for test_combination in classCombinations:
     print(test_combination)
     millis = int(round(time.time() * 1000))
-    mu = 0
-    sigma = 0
     for class_number in test_combination:
         num_lines_per_class = 0
-        all_features_class = []
-        all_features_class = np.asarray(all_features_class)
+        all_features_class = np.asarray([])
         for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
-            image = cv2.imread(filename)
-            temp = training(image, class_number, False)
-        temp = adjustNaNValues(temp)
-        temp = np.reshape(temp, (1, num_lines_per_class * num_features))
-        all_features = np.append(all_features, temp)
+            temp = training(cv2.imread(filename), class_number)
+        all_features = np.append(all_features,
+                                 np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
 
     # Normalization of features
-    all_features = np.reshape(all_features, (num_training_examples, num_features))
-    all_features, mu, sigma = featureNormalize(all_features)
+    all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
 
     # pca = PCA(n_components=0.99, svd_solver='full', whiten=True).fit(all_features)
     # all_features_training_trans = pca.transform(all_features)
 
-    classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
     classifier.fit(all_features, labels)
     labels = []
     all_features = []
@@ -212,17 +163,9 @@ for test_combination in classCombinations:
     for class_number in test_combination:
         for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
             print(filename)
-            image = cv2.imread(filename)
-            all_features_test = []
-            all_features_test = np.asarray(all_features_test)
-            num_testing_examples = 0
-            temp = training(image, -1, True)
-            temp = (temp - mu) / sigma
-            # temp_transform = pca.transform(temp)
-            testCase = np.average(temp, axis=0)
-            prediction = classifier.predict(np.asarray(testCase).reshape(1, -1))
-
+            prediction = test(cv2.imread(filename), classifier, mu, sigma)
             print(prediction)
+
             if prediction == class_number:
                 localCorrect += 1
                 correctAnswers += 1

@@ -28,22 +28,6 @@ def segment(image):
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
     # show_images([imageGray])
 
-    # imageGray = cropPrinted(imageGray.copy(), black_count)
-    # show_images([imageGray])
-
-    # crop_image
-
-    maxRow = 0
-    for i in range(len(black_count) - 1, -1, -1):
-        if (black_count[i] / imageGray.shape[1]) * 100 > 1:
-            constant = 0
-            if i + 10 <= imageGray.shape[0]:
-                constant = 10
-
-            maxRow = i + constant
-            imageGray = imageGray[0:maxRow][:]
-            break
-
     writer_lines = []
     line_start = 0
     foundALine = False
