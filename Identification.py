@@ -24,7 +24,7 @@ num_lines_per_class = 0
 num_classes = 19
 
 
-def feature_extraction(example, image_shape):
+def feature_extraction(example):
     example = example.astype('uint8')
     example_copy = example.copy()
 
@@ -39,7 +39,7 @@ def feature_extraction(example, image_shape):
     contours = np.asarray(contours)
 
     # feature 2, Blobs Detection
-    feature.extend(blobs_features(contours, hierarchy, image_shape))
+    feature.extend(blobs_features(contours, hierarchy))
 
     # feature 3, Connected Components
     feature.extend(ConnectedComponents(contours, hierarchy, example_copy))
@@ -54,16 +54,15 @@ def test(image, clf, mu, sigma):
     all_features_test = np.asarray([])
 
     if image.shape[0] > 3500:
-        image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
+        image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
 
     # image = adjust_rotation(image=image)
     # show_images([image], ["rotation"])
-    writerLines = segment(image.copy())
+    writerLines = segment(image)
 
-    shape = image.shape
     num_testing_examples = 0
     for line in writerLines:
-        example = feature_extraction(line, shape)
+        example = feature_extraction(line)
         all_features_test = np.append(all_features_test, example)
         num_testing_examples += 1
 
@@ -85,17 +84,17 @@ def training(image, class_num):
     global num_lines_per_class
     global num_training_examples
 
-    if image.shape[0] > 3500:
-        image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
+    image_height = image.shape[0]
+    if image_height > 3500:
+        image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image_height)))
 
     # image = adjust_rotation(image=image)
     # show_images([image], ["rotation"])
-    writerLines = segment(image.copy())
+    writerLines = segment(image)
 
-    shape = image.shape
     num_lines_per_class += len(writerLines)
     for line in writerLines:
-        all_features_class = np.append(all_features_class, feature_extraction(line, shape))
+        all_features_class = np.append(all_features_class, feature_extraction(line))
         labels.append(class_num)
         num_training_examples += 1
 
@@ -123,16 +122,15 @@ def adjustNaNValues(writer_features):
 
 def featureNormalize(X):
     mean = np.mean(X, axis=0)
-    normalized_X = X - np.mean(X, axis=0)
-    variances = np.var(normalized_X, axis=0)
-    deviation = np.sqrt(variances)
+    normalized_X = X - mean
+    deviation = np.sqrt(np.var(normalized_X, axis=0))
     normalized_X = np.divide(normalized_X, deviation)
     return normalized_X, mean, deviation
 
 
 correctAnswers = 0
 totalAnswers = 0
-class_labels = [x for x in range(2, num_classes + 1)]
+class_labels = list(range(2, num_classes + 1))
 classCombinations = list(combinations(class_labels, r=3))
 # classCombinations = [(4, 14, 15)]
 avgTime = 0
@@ -159,7 +157,6 @@ for test_combination in classCombinations:
     labels = []
     all_features = []
     num_training_examples = 0
-    localCorrect = 0
     for class_number in test_combination:
         for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
             print(filename)
@@ -167,7 +164,6 @@ for test_combination in classCombinations:
             print(prediction)
 
             if prediction == class_number:
-                localCorrect += 1
                 correctAnswers += 1
             else:
                 file = open("wrngClassified.txt", "a")

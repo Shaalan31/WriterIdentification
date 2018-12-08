@@ -5,7 +5,6 @@ from itertools import groupby
 from operator import itemgetter
 
 
-
 def segment(image):
     image = remove_shadow(image)
 
@@ -24,14 +23,11 @@ def segment(image):
 
     # top,bottom = extract_text(imageGray)
     # imageGray = imageGray[top:bottom,:]
-    # get count of black pixels for each row
-    black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
-    # show_images([imageGray])
 
     writer_lines = []
     line_start = 0
     foundALine = False
-    imgName = 0
+    # imgName = 0
     for line_index in range(imageGray.shape[0]):
         values, count = np.unique(imageGray[line_index, :], return_counts=True)
         if len(values) == 1:
@@ -47,35 +43,13 @@ def segment(image):
         else:
             if foundALine and percentageBlack < 1:
                 if line_index - line_start > 50:
-                    line = imageGray[line_start:line_index, :].astype('uint8')
-                    line = cv2.copyMakeBorder(line, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                    line = cv2.copyMakeBorder(imageGray[line_start:line_index, :].astype('uint8'), 1, 1, 1, 1,
+                                              cv2.BORDER_CONSTANT, value=[255, 255, 255])
                     # io.imsave('output/image' + str(imgName) + '.png', line)
-                    imgName += 1
+                    # imgName += 1
                     writer_lines.append(line)
                 foundALine = False
     return writer_lines
-
-
-def cropPrinted(imageGray, blackCount):
-    maskIndexed = np.where((blackCount / imageGray.shape[1]) > 0.2)[0]
-    tempImage = imageGray[maskIndexed]
-    indices = []
-    for i in range(0, len(tempImage)):
-        array = [x[0] for x in groupby(tempImage[i, :])]
-        if (len(array) == 3 or len(array) == 5) and array[0] == 255 and array[len(array) - 1] == 255:
-            indices.append(maskIndexed[i])
-
-    indicesNew = []
-    for i in range(len(indices) - 2, -1, -1):
-        if np.abs(indices[i] - indices[i + 1]) < 10:
-            continue
-        else:
-            indicesNew.append(indices[i] + 1)
-            indicesNew.append(indices[i + 1] - 1)
-            break
-    if len(indicesNew) == 0:
-        return imageGray
-    return imageGray[indicesNew[0]:indicesNew[1], :]
 
 
 def extract_text(img):
@@ -87,10 +61,10 @@ def extract_text(img):
     horizontal = cv2.erode(horizontal, horizontalStructure)
     horizontal = 255 - horizontal
     horizontal /= 255
-    sum = np.sum(horizontal,axis=1)
+    sum = np.sum(horizontal, axis=1)
     sum[sum < int(cols / 10)] = 0
     sum[sum > int(cols / 10)] = 1
-    half = int(sum.shape[0]/2)
+    half = int(sum.shape[0] / 2)
     top_boundary = half - np.argmax(sum[half:0:-1])
     bottom_boundary = half + np.argmax(sum[half:])
-    return top_boundary+2,bottom_boundary
+    return top_boundary + 2, bottom_boundary
