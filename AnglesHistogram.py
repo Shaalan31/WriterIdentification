@@ -17,10 +17,10 @@ def AnglesHistogram(image):
     anglesHist = []
     angle1 = 10
     angle2 = 40
+
     while angle2 < 180:
         anglesCopy = angles.copy()
-        anglesCopy[anglesCopy < angle1] = 0
-        anglesCopy[anglesCopy > angle2] = 0
+        anglesCopy[np.logical_or(anglesCopy < angle1, anglesCopy > angle2)] = 0
         anglesCopy[np.logical_and(anglesCopy >= angle1, anglesCopy <= angle2)] = 1
         anglesHist.append(np.sum(anglesCopy))
         angle1 += 30

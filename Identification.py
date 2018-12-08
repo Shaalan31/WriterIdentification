@@ -3,12 +3,14 @@ from AnglesHistogram import *
 from BlobsDetection import *
 from ConnectedComponents import *
 from DiskFractal import *
+from AdjustRotation import *
 import glob
 from sklearn import neighbors
 import warnings
 from sklearn.decomposition import PCA
 from itertools import combinations
 import time
+import pandas as pd
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -26,7 +28,7 @@ num_training_examples = 0
 num_testing_examples = 0
 num_features = 17
 num_lines_per_class = 0
-num_classes = 13
+num_classes = 19
 
 
 def training(image, class_num, testing):
@@ -38,16 +40,17 @@ def training(image, class_num, testing):
     global num_training_examples
     global num_testing_examples
 
-    # image = adjust_rotation(image=image)
     if image.shape[0] > 3500:
         image = cv2.resize(src=image.copy(), dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
 
+    # image = adjust_rotation(image=image)
+    # show_images([image], ["rotation"])
     writerLines = segment(image.copy())
 
     num_lines_per_class += len(writerLines)
     for line in writerLines:
         feature = []
-
+        # show_images([line], ["line"])
         # feature 1, Angles Histogram
         feature.extend(AnglesHistogram(line))
 
@@ -105,16 +108,32 @@ def adjustNaNValues(writer_features):
     for i in range(num_features):
         feature = writer_features[:, i]
         is_nan_mask = np.isnan(feature)
+        if len(np.where(np.asarray(is_nan_mask))[0]) == 0:
+            continue
+
         non_nan_indices = np.where(np.logical_not(is_nan_mask))[0]
         nan_indices = np.where(is_nan_mask)[0]
 
-        if len(nan_indices) > 0:
-            if len(non_nan_indices) == 0:
-                feature_mean = 0
-            else:
-                feature_mean = np.mean(feature[non_nan_indices])
-            writer_features[nan_indices, i] = feature_mean
+        if len(non_nan_indices) == 0:
+            feature_mean = 0
+        else:
+            feature_mean = np.mean(feature[non_nan_indices])
+        writer_features[nan_indices, i] = feature_mean
+
     return writer_features
+
+
+# def adjustNaNValuesVectorized(writer_features):
+#     is_nan_mask = np.isnan(writer_features)
+#     non_nan_indices = np.logical_not(is_nan_mask)
+#     nan_indices = is_nan_mask
+#     if len(nan_indices) > 0:
+#         if len(non_nan_indices) == 0:
+#             feature_mean = 0
+#         else:
+#             feature_mean = np.mean(writer_features[non_nan_indices])
+#         writer_features[nan_indices] = feature_mean
+#     return writer_features
 
 
 def featureNormalize(X):
@@ -124,15 +143,6 @@ def featureNormalize(X):
     deviation = np.sqrt(variances)
     normalized_X = np.divide(normalized_X, deviation)
     return normalized_X, mean, deviation
-
-
-def performPCA(allFeatures):
-    allFeaturesY = allFeatures - np.mean(allFeatures, axis=0)
-    print(allFeaturesY)
-    pca = PCA(n_components=18)
-    components = pca.fit_transform(allFeaturesY)
-    print(components)
-    return components
 
 
 # for class_number in range(1, num_classes + 1):
@@ -167,12 +177,13 @@ correctAnswers = 0
 totalAnswers = 0
 class_labels = [x for x in range(2, num_classes + 1)]
 classCombinations = list(combinations(class_labels, r=3))
-
 avgTime = 0
+muClasses = []
+
 for test_combination in classCombinations:
     print(test_combination)
     millis = int(round(time.time() * 1000))
-    mue = 0
+    mu = 0
     sigma = 0
     for class_number in test_combination:
         num_lines_per_class = 0
@@ -185,8 +196,13 @@ for test_combination in classCombinations:
         temp = np.reshape(temp, (1, num_lines_per_class * num_features))
         all_features = np.append(all_features, temp)
 
+    # Normalization of features
     all_features = np.reshape(all_features, (num_training_examples, num_features))
-    all_features,mue,sigma = featureNormalize(all_features)
+    all_features, mu, sigma = featureNormalize(all_features)
+
+    # pca = PCA(n_components=0.99, svd_solver='full', whiten=True).fit(all_features)
+    # all_features_training_trans = pca.transform(all_features)
+
     classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
     classifier.fit(all_features, labels)
     labels = []
@@ -201,11 +217,11 @@ for test_combination in classCombinations:
             all_features_test = np.asarray(all_features_test)
             num_testing_examples = 0
             temp = training(image, -1, True)
-            temp = adjustNaNValues(temp)
-            #temp,_,_ = featureNormalize(temp)
-            temp = (temp - mue)/sigma
+            temp = (temp - mu) / sigma
+            # temp_transform = pca.transform(temp)
             testCase = np.average(temp, axis=0)
             prediction = classifier.predict(np.asarray(testCase).reshape(1, -1))
+
             print(prediction)
             if prediction == class_number:
                 localCorrect += 1
@@ -213,11 +229,11 @@ for test_combination in classCombinations:
             else:
                 file = open("wrngClassified.txt", "a")
                 file.write(str(test_combination))
-
                 file.write('\n')
                 file.close()
             totalAnswers += 1
-    print(localCorrect * 100 / 3)
+            accuracy = (correctAnswers / totalAnswers) * 100
+            print("Accuracy = ", accuracy, "%")
     print((int(round(time.time() * 1000)) - millis) / 60000)
     avgTime += (int(round(time.time() * 1000)) - millis)
     print("-----------------------------------------------------------------")

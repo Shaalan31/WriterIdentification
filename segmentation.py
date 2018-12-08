@@ -22,8 +22,8 @@ def segment(image):
 
     imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
 
-    top,bottom = extract_text(imageGray)
-    imageGray = imageGray[top:bottom,:]
+    # top,bottom = extract_text(imageGray)
+    # imageGray = imageGray[top:bottom,:]
     # get count of black pixels for each row
     black_count = np.subtract(imageGray.shape[1], np.sum(imageGray * (1 / 255), axis=1))
     # show_images([imageGray])
