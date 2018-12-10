@@ -5,6 +5,7 @@ from skimage.filters import gaussian
 from io import *
 from commonfunctions import *
 
+
 # Function to detect the edges of the paper to remove the effect of any light
 def paper_edge_detection(image):
     imageCopy = image.copy()
@@ -21,9 +22,9 @@ def paper_edge_detection(image):
 
     return imagesEdDet, imageResized
 
+
 # Function to find the bounding box around a rectangle (paper)
 def find_bounding_box(image):
-
     # Thresholding the image
     imageThresh = np.copy(image)
 
@@ -46,7 +47,7 @@ def find_bounding_box(image):
         area = cv2.contourArea(contour)
         epsilon = 0.1 * cv2.arcLength(contour, True)
         rect = cv2.approxPolyDP(contour, epsilon, True)
-        if(len(rect) == 4):
+        if (len(rect) == 4):
             if (area > maxArea):
                 rectangle = rect
                 maxArea = area
@@ -84,7 +85,7 @@ def adjust_rotation(image):
     rect, imageBounded, maxArea = find_bounding_box(image=np.copy(image))
     misc.imsave('boundedRot.png', imageBounded)
 
-    if(maxArea < 2000):
+    if (maxArea < 2000):
         return image
 
     # Get the perspective transformation of the image
@@ -107,4 +108,3 @@ def adjust_rotation(image):
     newImage = cv2.warpPerspective(image, perspectiveTransf, (width, height))
 
     return newImage
-

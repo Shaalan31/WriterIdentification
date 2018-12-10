@@ -8,7 +8,7 @@ import scipy.ndimage as ndimage
 
 #
 #
-#img = cv2.imread('iAmDatabase/line1.png')
+# img = cv2.imread('iAmDatabase/line1.png')
 #
 #
 # img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -85,13 +85,15 @@ def DiskFractal(img, loops=25):
 
     return slope
 
+
 # print(DiskFractal(img,25))
-def EllipseFractal(img,angle,loops=25):
+def EllipseFractal(img, angle, loops=25):
     arr = np.zeros((loops, 2))
     arr[1] = ([np.log(1), np.log(np.sum(255 - img) / 255) - np.log(1)])
 
     for x in range(2, loops):
-        ellipse_mask = ndimage.rotate(cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * x - 1 ,  2*(2 * x - 1) )), float(angle))
+        ellipse_mask = ndimage.rotate(cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * x - 1, 2 * (2 * x - 1))),
+                                      float(angle))
         img_dilate = cv2.erode(img.copy(), ellipse_mask,
                                iterations=1)
         arr[x] = ([np.log(x), np.log(np.sum(255 - img_dilate) / 255) - np.log(x)])
@@ -115,8 +117,8 @@ def EllipseFractal(img,angle,loops=25):
 
     return slope
 
-#print(EllipseFractal(img,45,25))
-#print(EllipseFractal(img,0,25))
-#print(EllipseFractal(img,90,25))
-#print(EllipseFractal(img,45+90,25))
-#print(DiskFractal(img,25))
+# print(EllipseFractal(img,45,25))
+# print(EllipseFractal(img,0,25))
+# print(EllipseFractal(img,90,25))
+# print(EllipseFractal(img,45+90,25))
+# print(DiskFractal(img,25))
