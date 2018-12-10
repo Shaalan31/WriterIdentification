@@ -70,11 +70,12 @@ def test(image, clf, mu, sigma):
         np.reshape(all_features_test, (num_testing_examples, num_features))) - mu) / sigma
 
     # Predict on each line
-    predictions = []
-    for example in all_features_test:
-        predictions.append(clf.predict(np.asarray(example).reshape(1, -1)))
-    values, counts = np.unique(np.asarray(predictions), return_counts=True)
-    return values[np.argmax(counts)]
+    # predictions = []
+    # for example in all_features_test:
+    #     predictions.append(clf.predict(np.asarray(example).reshape(1, -1)))
+    # values, counts = np.unique(np.asarray(predictions), return_counts=True)
+    # return values[np.argmax(counts)]
+    return clf.predict(np.average(all_features_test, axis=0).reshape(1, -1))
 
 
 def training(image, class_num):
@@ -134,7 +135,7 @@ class_labels = list(range(2, num_classes + 1))
 classCombinations = list(combinations(class_labels, r=3))
 # classCombinations = [(4, 14, 15)]
 avgTime = 0
-classifier = neighbors.KNeighborsClassifier(n_neighbors=3)
+classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
 
 for test_combination in classCombinations:
     print(test_combination)
