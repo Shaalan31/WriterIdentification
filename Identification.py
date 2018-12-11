@@ -21,7 +21,7 @@ blob_starting_index = 5
 num_training_examples = 0
 num_features = 18
 num_lines_per_class = 0
-num_classes = 5
+num_classes = 159
 
 
 def feature_extraction(example):
@@ -131,7 +131,7 @@ def featureNormalize(X):
 
 correctAnswers = 0
 totalAnswers = 0
-class_labels = list(range(2, num_classes + 1))
+class_labels = list(range(1, num_classes + 1))
 classCombinations = list(combinations(class_labels, r=3))
 # classCombinations = [(4, 14, 15)]
 avgTime = 0
