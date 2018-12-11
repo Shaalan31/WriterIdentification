@@ -21,7 +21,7 @@ blob_starting_index = 5
 num_training_examples = 0
 num_features = 18
 num_lines_per_class = 0
-num_classes = 19
+num_classes = 5
 
 
 def feature_extraction(example):
