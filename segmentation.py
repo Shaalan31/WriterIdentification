@@ -21,6 +21,7 @@ def segment(image):
 
     imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
 
+
     top, bottom = extract_text(imageGray)
     imageGray = imageGray[top:bottom, :]
 
