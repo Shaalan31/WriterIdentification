@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Global Variables
 num_features = 18
 num_lines_per_class = 0
-num_classes = 40
+num_classes = 159
 training_dict = {}
 testing_dict = {}
 
@@ -47,10 +47,8 @@ def start():
     total_answers = 0
     class_labels = list(range(1, num_classes + 1))
     classCombinations = list(combinations(class_labels, r=3))
-    avgTime = 0
     classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
 
-    # classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=1e-16, hidden_layer_sizes=(20,), random_state=1)
 
     total = len(classCombinations)
     avg = np.array([])
@@ -62,7 +60,7 @@ def start():
             labels = np.asarray([])
             num_training_examples = 0
 
-            print(test_combination)
+            #print(test_combination)
             for class_number in test_combination:
                 num_current_examples = len(training_dict[class_number])
                 labels = np.append(labels, np.full(shape=(1, num_current_examples), fill_value=class_number))
@@ -77,11 +75,11 @@ def start():
             classifier.fit(all_features, labels)
 
             classNum = random.randint(0, 2)
-            print(test_combination[classNum])
+            #print(test_combination[classNum])
             test_vector = (testing_dict[test_combination[classNum]]).copy()
             test_vector = (test_vector - mu) / sigma
             prediction = classifier.predict(test_vector.reshape(1, -1))
-            print(prediction)
+            #print(prediction)
 
             if prediction == test_combination[classNum]:
                 correct_answers += 1
@@ -92,8 +90,11 @@ def start():
                 file.close()
             total_answers += 1
             accuracy = (correct_answers / total_answers) * 100
-            print("Accuracy = ", accuracy, "%")
+            #print("Accuracy = ", accuracy, "%")
         avg = np.append(avg,accuracy)
+        correct_answers=0
+        total_answers=0
+        print(i)
         np.savetxt("fasttest.csv", avg, delimiter=",")
 
 
