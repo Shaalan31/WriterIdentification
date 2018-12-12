@@ -132,7 +132,7 @@ def featureNormalize(X):
     return normalized_X, mean, deviation
 
 
-def reading_test_cases(directory):
+def reading_test_cases():
     global all_features
     global temp
     global num_training_examples
@@ -142,13 +142,17 @@ def reading_test_cases(directory):
     global totalAnswers
     global correctAnswers
     global avgTime
-    for index in range(1, total_test_cases + 1):
+    indices_array = ['01', '02', '03', '04', '05', '06', '07', '08', '09']
+    for i in range(10, 101):
+        indices_array.append(str(i))
+
+    for index in indices_array:
         millis = int(round(time.time() * 1000))
         test_combination = (1, 2, 3)
         for class_number in test_combination:
             num_lines_per_class = 0
             all_features_class = np.asarray([])
-            for filename in glob.glob('exam/' + str(directory) + '/' + str(index) + '/' + str(class_number) + '*.png'):
+            for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.PNG'):
                 print(filename)
                 temp = training(cv2.imread(filename), class_number)
             all_features = np.append(all_features,
@@ -161,28 +165,28 @@ def reading_test_cases(directory):
         labels = []
         all_features = []
         num_training_examples = 0
-        for filename in glob.glob('exam/' + str(directory) + '/' + str(index) + '/test*.png'):
+        for filename in glob.glob('data/' + index + '/test.PNG'):
             print(filename)
-            label = int(filename[len(filename) - 5])
-            print(label)
+            # label = int(filename[len(filename) - 5])
+            # print(label)
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
             print(prediction)
 
-            if prediction == label:
-                correctAnswers += 1
-            else:
-                file = open("wrngClassified.txt", "a")
-                file.write(str(test_combination))
-                file.write('\n')
-                file.close()
+            # if prediction == label:
+            #     correctAnswers += 1
+            # else:
+            #     file = open("wrngClassified.txt", "a")
+            #     file.write(str(test_combination))
+            #     file.write('\n')
+            #     file.close()
             totalAnswers += 1
-            accuracy = (correctAnswers / totalAnswers) * 100
-            print("Accuracy = ", accuracy, "%")
-        avgTime += (int(round(time.time() * 1000)) - millis)
+            # accuracy = (correctAnswers / totalAnswers) * 100
+            # print("Accuracy = ", accuracy, "%")
+        avgTime = (int(round(time.time() * 1000)) - millis)
         print("-----------------------------------------------------------------")
 
-        print("Average Time:")
-        print(avgTime / (totalAnswers * 60000))
+        print("Time:")
+        print(avgTime/1000 )
         print("-----------------------------------------------------------------")
 
 
@@ -198,7 +202,7 @@ for z in range(1, 2):
     avgTime = 0
     correctAnswers = 0
     totalAnswers = 0
-    reading_test_cases(z)
+    reading_test_cases()
 
 # for test_combination in classCombinations:
 #     print(test_combination)
