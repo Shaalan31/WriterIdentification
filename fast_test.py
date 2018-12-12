@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Global Variables
 num_features = 18
 num_lines_per_class = 0
-num_classes = 159
+num_classes = 165
 training_dict = {}
 testing_dict = {}
 
