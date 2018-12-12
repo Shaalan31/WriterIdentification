@@ -5,12 +5,10 @@ from ConnectedComponents import *
 from DiskFractal import *
 from AdjustRotation import *
 import glob
-from sklearn import neighbors
 import warnings
 from itertools import combinations
 import time
 from sklearn.neural_network import MLPClassifier
-
 import random
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -18,7 +16,8 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # Global Variables
 num_features = 18
 num_lines_per_class = 0
-num_classes = 22
+startClass = 1
+endClass = 100
 training_dict = {}
 testing_dict = {}
 
@@ -26,7 +25,7 @@ testing_dict = {}
 def process_training_data():
     global num_lines_per_class
 
-    for class_number in range(1, num_classes + 1):
+    for class_number in range(startClass, endClass + 1):
         temp = np.asarray([])
         num_lines_per_class = 0
         for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
@@ -36,26 +35,27 @@ def process_training_data():
 
 
 def process_test_data():
-    for class_number in range(1, num_classes + 1):
+    for class_number in range(startClass, endClass + 1):
         temp = np.asarray([])
         for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
             temp = test(cv2.imread(filename))
         testing_dict[class_number] = temp
 
 
-def start(alpha,number_of_neurons):
+def start(current_alpha, number_of_neurons):
     correct_answers = 0
     accuracy = 0
     total_answers = 0
-    class_labels = list(range(1, num_classes + 1))
+    class_labels = list(range(startClass, endClass + 1))
     classCombinations = list(combinations(class_labels, r=3))
     avgTime = 0
     # classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
 
-    classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=alpha, hidden_layer_sizes=(number_of_neurons,), random_state=1)
+    classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=current_alpha,
+                               hidden_layer_sizes=(number_of_neurons,),
+                               random_state=1)
 
     for test_combination in classCombinations:
-        #print(test_combination)
         millis = int(round(time.time() * 1000))
         all_features = np.asarray([])
         labels = np.asarray([])
@@ -78,7 +78,6 @@ def start(alpha,number_of_neurons):
             test_vector = (testing_dict[class_number]).copy()
             test_vector = (test_vector - mu) / sigma
             prediction = classifier.predict(test_vector.reshape(1, -1))
-            #print(prediction)
 
             if prediction == class_number:
                 correct_answers += 1
@@ -89,8 +88,9 @@ def start(alpha,number_of_neurons):
                 file.close()
             total_answers += 1
             accuracy = (correct_answers / total_answers) * 100
-            #print("Accuracy = ", accuracy, "%")
+            print("Accuracy = ", accuracy, "%")
     return accuracy
+
 
 def feature_extraction(example):
     example = example.astype('uint8')
@@ -189,7 +189,7 @@ def featureNormalize(X):
 # for key, value in testing_dict.items():
 #     np.savetxt("test" + str(key + 159 - 13) + ".csv", value, delimiter=",")
 
-for i in range(1, num_classes + 1):
+for i in range(startClass, endClass + 1):
     training_dict[i] = np.genfromtxt('training' + str(i) + '.csv', delimiter=",")
     testing_dict[i] = np.genfromtxt('test' + str(i) + '.csv', delimiter=",")
 
@@ -197,20 +197,18 @@ maxAccuracy = -1
 bestAlpha = -1
 bestUnits = -1
 
-while True:
-    alpha = np.power(10,random.uniform(-10,0))
-    units = random.randint(10,30)
-    accuracy = start(alpha,units)
-    if accuracy > maxAccuracy:
-        maxAccuracy = accuracy
-        bestAlpha = alpha
-        bestUnits = units
-    print("bestalpha: "+str(bestAlpha))
-    print("bestunits: "+str(bestUnits))
-    print("accuracy: "+str(maxAccuracy))
-    print("-----------------------------------------")
+accuracy = start(0.046041, 22)
+print(accuracy)
 
-
-
-
-
+# while True:
+#     alpha = np.power(10, random.uniform(-10, -1))
+#     units = random.randint(13, 25)
+#     accuracy = start(alpha, units)
+#     if accuracy > maxAccuracy:
+#         maxAccuracy = accuracy
+#         bestAlpha = alpha
+#         bestUnits = units
+#         print("bestalpha: " + str(bestAlpha))
+#         print("bestunits: " + str(bestUnits))
+#         print("accuracy: " + str(maxAccuracy))
+#         print("-----------------------------------------")
