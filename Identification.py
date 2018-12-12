@@ -9,6 +9,7 @@ from sklearn import neighbors
 import warnings
 from itertools import combinations
 import time
+from sklearn.neural_network import MLPClassifier
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -22,6 +23,8 @@ num_training_examples = 0
 num_features = 18
 num_lines_per_class = 0
 num_classes = 159
+
+total_test_cases = 100
 
 
 def feature_extraction(example):
@@ -39,7 +42,7 @@ def feature_extraction(example):
     contours = np.asarray(contours)
 
     # feature 2, Blobs Detection
-    feature.extend(blobs_features(contours, hierarchy))
+    feature.extend(blob_threaded(contours, hierarchy))
 
     # feature 3, Connected Components
     feature.extend(ConnectedComponents(contours, hierarchy, example_copy))
@@ -129,42 +132,43 @@ def featureNormalize(X):
     return normalized_X, mean, deviation
 
 
-correctAnswers = 0
-totalAnswers = 0
-class_labels = list(range(1, num_classes + 1))
-classCombinations = list(combinations(class_labels, r=3))
-# classCombinations = [(4, 14, 15)]
-avgTime = 0
-classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
+def reading_test_cases(directory):
+    global all_features
+    global temp
+    global num_training_examples
+    global labels
+    global num_lines_per_class
+    global all_features_class
+    global totalAnswers
+    global correctAnswers
+    global avgTime
+    for index in range(1, total_test_cases + 1):
+        millis = int(round(time.time() * 1000))
+        test_combination = (1, 2, 3)
+        for class_number in test_combination:
+            num_lines_per_class = 0
+            all_features_class = np.asarray([])
+            for filename in glob.glob('exam/' + str(directory) + '/' + str(index) + '/' + str(class_number) + '*.png'):
+                print(filename)
+                temp = training(cv2.imread(filename), class_number)
+            all_features = np.append(all_features,
+                                     np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
 
-for test_combination in classCombinations:
-    print(test_combination)
-    millis = int(round(time.time() * 1000))
-    for class_number in test_combination:
-        num_lines_per_class = 0
-        all_features_class = np.asarray([])
-        for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
-            temp = training(cv2.imread(filename), class_number)
-        all_features = np.append(all_features,
-                                 np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
+        # Normalization of features
+        all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
 
-    # Normalization of features
-    all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
-
-    # pca = PCA(n_components=0.99, svd_solver='full', whiten=True).fit(all_features)
-    # all_features_training_trans = pca.transform(all_features)
-
-    classifier.fit(all_features, labels)
-    labels = []
-    all_features = []
-    num_training_examples = 0
-    for class_number in test_combination:
-        for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
+        classifier.fit(all_features, labels)
+        labels = []
+        all_features = []
+        num_training_examples = 0
+        for filename in glob.glob('exam/' + str(directory) + '/' + str(index) + '/test*.png'):
             print(filename)
+            label = int(filename[len(filename) - 5])
+            print(label)
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
             print(prediction)
 
-            if prediction == class_number:
+            if prediction == label:
                 correctAnswers += 1
             else:
                 file = open("wrngClassified.txt", "a")
@@ -174,12 +178,71 @@ for test_combination in classCombinations:
             totalAnswers += 1
             accuracy = (correctAnswers / totalAnswers) * 100
             print("Accuracy = ", accuracy, "%")
-    print((int(round(time.time() * 1000)) - millis) / 60000)
-    avgTime += (int(round(time.time() * 1000)) - millis)
-    print("-----------------------------------------------------------------")
-print("Average Time:")
-print(avgTime / (totalAnswers * 60000))
-print("-----------------------------------------------------------------")
+        avgTime += (int(round(time.time() * 1000)) - millis)
+        print("-----------------------------------------------------------------")
 
-accuracy = (correctAnswers / totalAnswers) * 100
-print(accuracy)
+        print("Average Time:")
+        print(avgTime / (totalAnswers * 60000))
+        print("-----------------------------------------------------------------")
+
+
+correctAnswers = 0
+totalAnswers = 0
+# class_labels = list(range(1, num_classes + 1))
+# classCombinations = list(combinations(class_labels, r=3))
+avgTime = 0
+# classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
+classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=1e-16, hidden_layer_sizes=(22,), random_state=1)
+
+for z in range(1, 2):
+    avgTime = 0
+    correctAnswers = 0
+    totalAnswers = 0
+    reading_test_cases(z)
+
+# for test_combination in classCombinations:
+#     print(test_combination)
+#     millis = int(round(time.time() * 1000))
+#     for class_number in test_combination:
+#         num_lines_per_class = 0
+#         all_features_class = np.asarray([])
+#         for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
+#             temp = training(cv2.imread(filename), class_number)
+#         all_features = np.append(all_features,
+#                                  np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
+#
+#     # Normalization of features
+#     all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
+#
+#     # pca = PCA(n_components=0.99, svd_solver='full', whiten=True).fit(all_features)
+#     # all_features_training_trans = pca.transform(all_features)
+#
+#     classifier.fit(all_features, labels)
+#     labels = []
+#     all_features = []
+#     num_training_examples = 0
+#     for class_number in test_combination:
+#         for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
+#             print(filename)
+#             prediction = test(cv2.imread(filename), classifier, mu, sigma)
+#             print(prediction)
+#
+#             if prediction == class_number:
+#                 correctAnswers += 1
+#             else:
+#                 file = open("wrngClassified.txt", "a")
+#                 file.write(str(test_combination))
+#                 file.write('\n')
+#                 file.close()
+#             totalAnswers += 1
+#             accuracy = (correctAnswers / totalAnswers) * 100
+#             print("Accuracy = ", accuracy, "%")
+#     print((int(round(time.time() * 1000)) - millis) / 60000)
+#     avgTime += (int(round(time.time() * 1000)) - millis)
+#     print("-----------------------------------------------------------------")
+# print("Average Time:")
+# print(avgTime / (totalAnswers * 60000))
+# print("-----------------------------------------------------------------")
+#
+# accuracy = (correctAnswers / totalAnswers) * 100
+# print(accuracy)
