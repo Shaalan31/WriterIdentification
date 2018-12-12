@@ -13,19 +13,6 @@ from sklearn.neural_network import MLPClassifier
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-# Global Variables
-all_features = np.asarray([])
-all_features_class = np.asarray([])
-labels = []
-temp = []
-blob_starting_index = 5
-num_training_examples = 0
-num_features = 18
-num_lines_per_class = 0
-num_classes = 159
-
-total_test_cases = 100
-
 
 def feature_extraction(example):
     example = example.astype('uint8')
@@ -139,9 +126,9 @@ def reading_test_cases():
     global labels
     global num_lines_per_class
     global all_features_class
-    global totalAnswers
-    global correctAnswers
-    global avgTime
+    results_file = open("results.txt","w+")
+    time_file = open("time.txt","w+")
+
     indices_array = ['01', '02', '03', '04', '05', '06', '07', '08', '09']
     for i in range(10, 101):
         indices_array.append(str(i))
@@ -171,82 +158,27 @@ def reading_test_cases():
             # print(label)
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
             print(prediction)
-
-            # if prediction == label:
-            #     correctAnswers += 1
-            # else:
-            #     file = open("wrngClassified.txt", "a")
-            #     file.write(str(test_combination))
-            #     file.write('\n')
-            #     file.close()
-            totalAnswers += 1
-            # accuracy = (correctAnswers / totalAnswers) * 100
-            # print("Accuracy = ", accuracy, "%")
-        avgTime = (int(round(time.time() * 1000)) - millis)
+            results_file.write(str(prediction)+"\n")
+        calculated_time = (int(round(time.time() * 1000)) - millis)/1000
         print("-----------------------------------------------------------------")
-
         print("Time:")
-        print(avgTime/1000 )
+        print(calculated_time)
+        time_file.write(calculated_time+'\n')
+
         print("-----------------------------------------------------------------")
+    time_file.close()
+    results_file.close()
 
 
-correctAnswers = 0
-totalAnswers = 0
-# class_labels = list(range(1, num_classes + 1))
-# classCombinations = list(combinations(class_labels, r=3))
-avgTime = 0
-# classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
+# Global Variables
+all_features = np.asarray([])
+all_features_class = np.asarray([])
+labels = []
+temp = []
+num_training_examples = 0
+num_features = 18
+num_lines_per_class = 0
+total_test_cases = 100
+
 classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=1e-16, hidden_layer_sizes=(22,), random_state=1)
-
-for z in range(1, 2):
-    avgTime = 0
-    correctAnswers = 0
-    totalAnswers = 0
-    reading_test_cases()
-
-# for test_combination in classCombinations:
-#     print(test_combination)
-#     millis = int(round(time.time() * 1000))
-#     for class_number in test_combination:
-#         num_lines_per_class = 0
-#         all_features_class = np.asarray([])
-#         for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
-#             temp = training(cv2.imread(filename), class_number)
-#         all_features = np.append(all_features,
-#                                  np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
-#
-#     # Normalization of features
-#     all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
-#
-#     # pca = PCA(n_components=0.99, svd_solver='full', whiten=True).fit(all_features)
-#     # all_features_training_trans = pca.transform(all_features)
-#
-#     classifier.fit(all_features, labels)
-#     labels = []
-#     all_features = []
-#     num_training_examples = 0
-#     for class_number in test_combination:
-#         for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
-#             print(filename)
-#             prediction = test(cv2.imread(filename), classifier, mu, sigma)
-#             print(prediction)
-#
-#             if prediction == class_number:
-#                 correctAnswers += 1
-#             else:
-#                 file = open("wrngClassified.txt", "a")
-#                 file.write(str(test_combination))
-#                 file.write('\n')
-#                 file.close()
-#             totalAnswers += 1
-#             accuracy = (correctAnswers / totalAnswers) * 100
-#             print("Accuracy = ", accuracy, "%")
-#     print((int(round(time.time() * 1000)) - millis) / 60000)
-#     avgTime += (int(round(time.time() * 1000)) - millis)
-#     print("-----------------------------------------------------------------")
-# print("Average Time:")
-# print(avgTime / (totalAnswers * 60000))
-# print("-----------------------------------------------------------------")
-#
-# accuracy = (correctAnswers / totalAnswers) * 100
-# print(accuracy)
+reading_test_cases()
