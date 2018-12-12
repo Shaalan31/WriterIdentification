@@ -9,8 +9,7 @@ from sklearn import neighbors
 import warnings
 from itertools import combinations
 import random
-import time
-from sklearn.neural_network import MLPClassifier
+
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -187,16 +186,6 @@ def featureNormalize(X):
     deviation = np.sqrt(np.var(normalized_X, axis=0))
     normalized_X = np.divide(normalized_X, deviation)
     return normalized_X, mean, deviation
-
-
-# process_training_data()
-#
-# for key, value in training_dict.items():
-#     np.savetxt("training" + str(key) + ".csv", value, delimiter=",")
-#
-# process_test_data()
-# for key, value in testing_dict.items():
-#     np.savetxt("test" + str(key) + ".csv", value, delimiter=",")
 
 for i in range(1, num_classes + 1):
     print(i)
