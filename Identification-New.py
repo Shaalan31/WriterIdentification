@@ -182,13 +182,12 @@ def featureNormalize(X):
 
 
 # process_training_data()
-#
 # for key, value in training_dict.items():
-#     np.savetxt("training" + str(key) + ".csv", value, delimiter=",")
+#     np.savetxt("training" + str(key + 159 - 13) + ".csv", value, delimiter=",")
 #
 # process_test_data()
 # for key, value in testing_dict.items():
-#     np.savetxt("test" + str(key) + ".csv", value, delimiter=",")
+#     np.savetxt("test" + str(key + 159 - 13) + ".csv", value, delimiter=",")
 
 for i in range(1, num_classes + 1):
     training_dict[i] = np.genfromtxt('training' + str(i) + '.csv', delimiter=",")
