@@ -9,7 +9,6 @@ import warnings
 from itertools import combinations
 import time
 from sklearn.neural_network import MLPClassifier
-import random
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -183,20 +182,20 @@ def featureNormalize(X):
 
 # process_training_data()
 # for key, value in training_dict.items():
-#     np.savetxt("training" + str(key + 159 - 13) + ".csv", value, delimiter=",")
+#     np.savetxt("training" + str(key) + ".csv", value, delimiter=",")
 #
 # process_test_data()
 # for key, value in testing_dict.items():
-#     np.savetxt("test" + str(key + 159 - 13) + ".csv", value, delimiter=",")
+#     np.savetxt("test" + str(key) + ".csv", value, delimiter=",")
 
 for i in range(startClass, endClass + 1):
     training_dict[i] = np.genfromtxt('training' + str(i) + '.csv', delimiter=",")
     testing_dict[i] = np.genfromtxt('test' + str(i) + '.csv', delimiter=",")
-
-maxAccuracy = -1
-bestAlpha = -1
-bestUnits = -1
-
+#
+# maxAccuracy = -1
+# bestAlpha = -1
+# bestUnits = -1
+#
 accuracy = start(0.046041, 22)
 print(accuracy)
 

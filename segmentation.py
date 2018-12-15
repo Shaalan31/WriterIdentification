@@ -1,8 +1,6 @@
 from commonfunctions import *
 from skimage.filters import gaussian
 from skimage.filters import threshold_otsu
-from itertools import groupby
-from operator import itemgetter
 
 
 def segment(image):
