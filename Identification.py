@@ -126,11 +126,12 @@ def reading_test_cases():
     global labels
     global num_lines_per_class
     global all_features_class
-    results_file = open("results.txt","w+")
-    time_file = open("time.txt","w+")
+    results_array = []
+    time_array = []
+
 
     indices_array = ['01', '02', '03', '04', '05', '06', '07', '08', '09']
-    for i in range(10, 101):
+    for i in range(10, 11):
         indices_array.append(str(i))
 
     for index in indices_array:
@@ -158,15 +159,19 @@ def reading_test_cases():
             # print(label)
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
             print(prediction)
-            results_file.write(str(prediction)+"\n")
+            results_array.append(str(prediction) + '\n')
         calculated_time = (int(round(time.time() * 1000)) - millis)/1000
         print("-----------------------------------------------------------------")
         print("Time:")
         print(calculated_time)
-        time_file.write(calculated_time+'\n')
+        time_array.append(str(calculated_time) + '\n')
 
         print("-----------------------------------------------------------------")
+    time_file = open("time.txt","w+")
+    results_file = open("results.txt", "w+")
+    time_file.writelines(time_array )
     time_file.close()
+    results_file.writelines(results_array)
     results_file.close()
 
 

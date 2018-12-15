@@ -2,8 +2,9 @@ import numpy as np
 import cv2
 import scipy.misc as misc
 from skimage.filters import gaussian
+from io import *
 from commonfunctions import *
-from skimage.filters import threshold_otsu
+
 
 # Function to detect the edges of the paper to remove the effect of any light
 def paper_edge_detection(image):
@@ -14,30 +15,16 @@ def paper_edge_detection(image):
 
     # bilateral filter for noise removal while keeping edges sharp
     imageBlur = cv2.bilateralFilter(imageGray, 9, 75, 75)
-    show_images([imageBlur])
-    
-#     imagesThresh = cv2.adaptiveThreshold(imageBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 115, 4)
-    imageBlur *= 255
-    threshold = threshold_otsu(imageBlur)
-    imageBlur[(imageBlur > threshold)] = 255
-    imageBlur[(imageBlur <= threshold)] = 0
-    imagesThresh = imageBlur.copy()
-
-    show_images([imagesThresh])
+    imagesThresh = cv2.adaptiveThreshold(imageBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 115, 4)
     imagesThresh = cv2.medianBlur(imagesThresh, 11)
-    show_images([imagesThresh])
-    
     imagesEdDet = cv2.Canny(imagesThresh, 200, 250)
-    show_images([imagesEdDet])
-    
-    # closing --> dilation then erosion
-    imagesEdDet = cv2.morphologyEx(imagesEdDet, cv2.MORPH_CLOSE, np.ones((3, 3))) #np.ones((5, 11)
+    imagesEdDet = cv2.morphologyEx(imagesEdDet, cv2.MORPH_CLOSE, np.ones((5, 11)))
 
     return imagesEdDet, imageResized
 
+
 # Function to find the bounding box around a rectangle (paper)
 def find_bounding_box(image):
-
     # Thresholding the image
     imageThresh = np.copy(image)
 
@@ -55,13 +42,12 @@ def find_bounding_box(image):
     # Get the largest contour which will be the paper
     maxArea = -1
     index = 0
-    rectangle = contours[0]
     for x in range(0, len(contours)):
         contour = contours[x]
         area = cv2.contourArea(contour)
         epsilon = 0.1 * cv2.arcLength(contour, True)
         rect = cv2.approxPolyDP(contour, epsilon, True)
-        if(len(rect) == 4):
+        if (len(rect) == 4):
             if (area > maxArea):
                 rectangle = rect
                 maxArea = area
@@ -84,16 +70,10 @@ def find_bounding_box(image):
     # Get the right order of the rectangle points
     rect = np.zeros((4, 2))
     sum = points.sum(axis=1)
-    diff = np.diff(points, axis=1)
-    
-    # the top-left point will have the smallest sum
     rect[0] = points[np.argmin(sum)]
-    # the bottom-right point will have the largest sum
     rect[2] = points[np.argmax(sum)]
-    
-    # top-right point will have the smallest difference
+    diff = np.diff(points, axis=1)
     rect[1] = points[np.argmin(diff)]
-    # the bottom-left will have the largest difference
     rect[3] = points[np.argmax(diff)]
 
     return rect, imageResized, maxArea
@@ -103,9 +83,9 @@ def find_bounding_box(image):
 def adjust_rotation(image):
     # get the rotation angle and the bounding box of the paper
     rect, imageBounded, maxArea = find_bounding_box(image=np.copy(image))
-    io.imsave('boundedRot.png', imageBounded)
+    misc.imsave('boundedRot.png', imageBounded)
 
-    if maxArea < 2000:
+    if (maxArea < 2000):
         return image
 
     # Get the perspective transformation of the image
@@ -126,9 +106,5 @@ def adjust_rotation(image):
 
     perspectiveTransf = cv2.getPerspectiveTransform(rect, imageCorners)
     newImage = cv2.warpPerspective(image, perspectiveTransf, (width, height))
-    io.imsave('final.png', newImage)
-    
-    # Crop the margin
-    cropped = newImage[80 : newImage.shape[0] - 80, 50 : newImage.shape[1] - 50]
-    
-    return cropped
+
+    return newImage
