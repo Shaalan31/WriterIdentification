@@ -5,9 +5,7 @@ from ConnectedComponents import *
 from DiskFractal import *
 from AdjustRotation import *
 import glob
-from sklearn import neighbors
 import warnings
-from itertools import combinations
 import time
 from sklearn.neural_network import MLPClassifier
 
@@ -129,9 +127,8 @@ def reading_test_cases():
     results_array = []
     time_array = []
 
-
     indices_array = ['01', '02', '03', '04', '05', '06', '07', '08', '09']
-    for i in range(10, 11):
+    for i in range(10, 101):
         indices_array.append(str(i))
 
     for index in indices_array:
@@ -140,7 +137,7 @@ def reading_test_cases():
         for class_number in test_combination:
             num_lines_per_class = 0
             all_features_class = np.asarray([])
-            for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.PNG'):
+            for filename in glob.glob('iam/data/' + index + '/' + str(class_number) + '/*.PNG'):
                 print(filename)
                 temp = training(cv2.imread(filename), class_number)
             all_features = np.append(all_features,
@@ -153,23 +150,29 @@ def reading_test_cases():
         labels = []
         all_features = []
         num_training_examples = 0
-        for filename in glob.glob('data/' + index + '/test.PNG'):
+        total_cases = 0
+        total_correct = 0
+        for filename in glob.glob('iam/data/' + index + '/test*.PNG'):
             print(filename)
-            # label = int(filename[len(filename) - 5])
-            # print(label)
+            label = int(filename[len(filename) - 5])
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
-            print(prediction)
-            results_array.append(str(prediction) + '\n')
-        calculated_time = (int(round(time.time() * 1000)) - millis)/1000
+            print("label: " + str(label) + " prediction:" + str(prediction[0]))
+            total_cases += 1
+            if prediction[0] == label:
+                total_correct += 1
+            # print(prediction)
+            results_array.append(str(prediction[0]) + '\n')
+            print("Accuracy = ", total_correct * 100 / total_cases, " %")
+        calculated_time = (int(round(time.time() * 1000)) - millis) / 1000
         print("-----------------------------------------------------------------")
         print("Time:")
         print(calculated_time)
         time_array.append(str(calculated_time) + '\n')
 
         print("-----------------------------------------------------------------")
-    time_file = open("time.txt","w+")
+    time_file = open("time.txt", "w+")
     results_file = open("results.txt", "w+")
-    time_file.writelines(time_array )
+    time_file.writelines(time_array)
     time_file.close()
     results_file.writelines(results_array)
     results_file.close()
@@ -185,5 +188,5 @@ num_features = 18
 num_lines_per_class = 0
 total_test_cases = 100
 
-classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=1e-16, hidden_layer_sizes=(22,), random_state=1)
+classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
 reading_test_cases()
