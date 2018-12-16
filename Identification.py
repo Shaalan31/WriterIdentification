@@ -78,7 +78,6 @@ def training(image, class_num):
         image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image_height)))
 
     # image = adjust_rotation(image=image)
-    # show_images([image], ["rotation"])
     writerLines = segment(image)
 
     num_lines_per_class += len(writerLines)
