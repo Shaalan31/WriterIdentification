@@ -131,43 +131,48 @@ def reading_test_cases():
         indices_array.append(str(i))
 
     for index in indices_array:
-        millis = int(round(time.time() * 1000))
-        test_combination = (1, 2, 3)
-        for class_number in test_combination:
-            num_lines_per_class = 0
-            all_features_class = np.asarray([])
-            for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.jpg'):
+        try:
+            millis = int(round(time.time() * 1000))
+            test_combination = (1, 2, 3)
+            for class_number in test_combination:
+                num_lines_per_class = 0
+                all_features_class = np.asarray([])
+                for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.jpg'):
+                    print(filename)
+                    temp = training(cv2.imread(filename), class_number)
+                all_features = np.append(all_features,
+                                         np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
+
+            # Normalization of features
+            all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
+
+            classifier.fit(all_features, labels)
+            labels = []
+            all_features = []
+            num_training_examples = 0
+            total_cases = 0
+            total_correct = 0
+            for filename in glob.glob('data/' + index + '/test*.jpg'):
                 print(filename)
-                temp = training(cv2.imread(filename), class_number)
-            all_features = np.append(all_features,
-                                     np.reshape(adjustNaNValues(temp), (1, num_lines_per_class * num_features)))
+                label = int(filename[len(filename) - 5])
+                prediction = test(cv2.imread(filename), classifier, mu, sigma)
+                print("label: " + str(label) + " prediction:" + str(prediction[0]))
+                total_cases += 1
+                if prediction[0] == label:
+                    total_correct += 1
+                results_array.append(str(prediction[0]) + '\n')
+                print("Accuracy = ", total_correct * 100 / total_cases, " %")
+            calculated_time = (int(round(time.time() * 1000)) - millis) / 1000
+            print("-----------------------------------------------------------------")
+            print("Time:")
+            print(calculated_time)
+            time_array.append(str(calculated_time) + '\n')
+            print("-----------------------------------------------------------------")
+        except:
+            print("Exception")
+            results_array.append(str(0) + '\n')
+            time_array.append(str(0) + '\n')
 
-        # Normalization of features
-        all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
-
-        classifier.fit(all_features, labels)
-        labels = []
-        all_features = []
-        num_training_examples = 0
-        total_cases = 0
-        total_correct = 0
-        for filename in glob.glob('data/' + index + '/test*.jpg'):
-            print(filename)
-            label = int(filename[len(filename) - 5])
-            prediction = test(cv2.imread(filename), classifier, mu, sigma)
-            print("label: " + str(label) + " prediction:" + str(prediction[0]))
-            total_cases += 1
-            if prediction[0] == label:
-                total_correct += 1
-            results_array.append(str(prediction[0]) + '\n')
-            print("Accuracy = ", total_correct * 100 / total_cases, " %")
-        calculated_time = (int(round(time.time() * 1000)) - millis) / 1000
-        print("-----------------------------------------------------------------")
-        print("Time:")
-        print(calculated_time)
-        time_array.append(str(calculated_time) + '\n')
-
-        print("-----------------------------------------------------------------")
     time_file = open("time.txt", "w+")
     results_file = open("results.txt", "w+")
     time_file.writelines(time_array)
