@@ -4,7 +4,7 @@ import math
 
 
 # @returns word_dist within_word_dist total_transitions sdW MedianW AverageW threshold
-def ConnectedComponents(contours, hierarchy, img):
+def ConnectedComponents(contours, hierarchy, img, image_shape):
     mask = (hierarchy[:, 3] == 0).astype('int')
     contours = contours[np.where(mask)]
     bounding_rect = np.zeros((len(contours), 6))
@@ -16,7 +16,8 @@ def ConnectedComponents(contours, hierarchy, img):
     h_to_w_ratio = np.average(bounding_rect[:, 5], axis=0)
 
     bounding_rect_sorted = bounding_rect[bounding_rect[:, 0].argsort()]
-    mask = (bounding_rect_sorted[:, 4] > 375).astype('int')
+    iAmDbImageSize = 375 / 8780618
+    mask = (bounding_rect_sorted[:, 4] > (iAmDbImageSize * (image_shape[0] * image_shape[1]))).astype('int')
     bounding_rect_sorted = bounding_rect_sorted[np.where(mask)]
 
     diff_dist_word = np.diff(bounding_rect_sorted, axis=0)[:, 0] - bounding_rect_sorted[:-1, 2]

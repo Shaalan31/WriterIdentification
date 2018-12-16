@@ -12,7 +12,7 @@ from sklearn.neural_network import MLPClassifier
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
-def feature_extraction(example):
+def feature_extraction(example, image_shape):
     example = example.astype('uint8')
     example_copy = example.copy()
 
@@ -30,7 +30,7 @@ def feature_extraction(example):
     feature.extend(blob_threaded(contours, hierarchy))
 
     # feature 3, Connected Components
-    feature.extend(ConnectedComponents(contours, hierarchy, example_copy))
+    feature.extend(ConnectedComponents(contours, hierarchy, example_copy, image_shape))
 
     # feature 4, Disk Fractal
     feature.extend(DiskFractal(example_copy))
@@ -50,7 +50,7 @@ def test(image, clf, mu, sigma):
 
     num_testing_examples = 0
     for line in writerLines:
-        example = feature_extraction(line)
+        example = feature_extraction(line, image.shape)
         all_features_test = np.append(all_features_test, example)
         num_testing_examples += 1
 
@@ -82,7 +82,7 @@ def training(image, class_num):
 
     num_lines_per_class += len(writerLines)
     for line in writerLines:
-        all_features_class = np.append(all_features_class, feature_extraction(line))
+        all_features_class = np.append(all_features_class, feature_extraction(line, image.shape))
         labels.append(class_num)
         num_training_examples += 1
 
@@ -136,7 +136,7 @@ def reading_test_cases():
         for class_number in test_combination:
             num_lines_per_class = 0
             all_features_class = np.asarray([])
-            for filename in glob.glob('iam/data/' + index + '/' + str(class_number) + '/*.PNG'):
+            for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.jpg'):
                 print(filename)
                 temp = training(cv2.imread(filename), class_number)
             all_features = np.append(all_features,
@@ -151,7 +151,7 @@ def reading_test_cases():
         num_training_examples = 0
         total_cases = 0
         total_correct = 0
-        for filename in glob.glob('iam/data/' + index + '/test*.PNG'):
+        for filename in glob.glob('data/' + index + '/test*.jpg'):
             print(filename)
             label = int(filename[len(filename) - 5])
             prediction = test(cv2.imread(filename), classifier, mu, sigma)
@@ -159,7 +159,6 @@ def reading_test_cases():
             total_cases += 1
             if prediction[0] == label:
                 total_correct += 1
-            # print(prediction)
             results_array.append(str(prediction[0]) + '\n')
             print("Accuracy = ", total_correct * 100 / total_cases, " %")
         calculated_time = (int(round(time.time() * 1000)) - millis) / 1000
