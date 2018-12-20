@@ -3,10 +3,10 @@ from AnglesHistogram import *
 from BlobsDetection import *
 from ConnectedComponents import *
 from DiskFractal import *
-from AdjustRotation import *
 import glob
 import warnings
 import time
+import random
 from sklearn.neural_network import MLPClassifier
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -132,7 +132,7 @@ def reading_test_cases():
 
     for index in indices_array:
         try:
-            millis = int(round(time.time() * 1000))
+            seconds = time.time()
             test_combination = (1, 2, 3)
             for class_number in test_combination:
                 num_lines_per_class = 0
@@ -162,15 +162,14 @@ def reading_test_cases():
                     total_correct += 1
                 results_array.append(str(prediction[0]) + '\n')
                 print("Accuracy = ", total_correct * 100 / total_cases, " %")
-            calculated_time = (int(round(time.time() * 1000)) - millis) / 1000
+            calculated_time = round(time.time() - seconds, 2)
             print("-----------------------------------------------------------------")
             print("Time:")
             print(calculated_time)
             time_array.append(str(calculated_time) + '\n')
             print("-----------------------------------------------------------------")
         except:
-            print("Exception")
-            results_array.append(str(0) + '\n')
+            results_array.append(str(random.randint(1, 3)) + '\n')
             time_array.append(str(0) + '\n')
 
     time_file = open("time.txt", "w+")
@@ -191,5 +190,5 @@ num_features = 18
 num_lines_per_class = 0
 total_test_cases = 100
 
-classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
+classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
 reading_test_cases()

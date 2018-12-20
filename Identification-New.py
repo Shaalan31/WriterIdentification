@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 num_features = 18
 num_lines_per_class = 0
 startClass = 1
-endClass = 100
+endClass = 159
 training_dict = {}
 testing_dict = {}
 
@@ -47,15 +47,13 @@ def start(current_alpha, number_of_neurons):
     total_answers = 0
     class_labels = list(range(startClass, endClass + 1))
     classCombinations = list(combinations(class_labels, r=3))
-    avgTime = 0
-    # classifier = neighbors.KNeighborsClassifier(n_neighbors=3, n_jobs=-1)
 
-    classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=current_alpha,
-                               hidden_layer_sizes=(number_of_neurons,),
-                               random_state=1)
+    classifier = MLPClassifier(solver='lbfgs', max_iter=50000, alpha=current_alpha,
+                               hidden_layer_sizes=(number_of_neurons, 18, 15, 12, 7,),
+                               random_state=int(time.time()))
 
     for test_combination in classCombinations:
-        millis = int(round(time.time() * 1000))
+        print(test_combination)
         all_features = np.asarray([])
         labels = np.asarray([])
         num_training_examples = 0
