@@ -190,5 +190,5 @@ num_features = 18
 num_lines_per_class = 0
 total_test_cases = 100
 
-classifier = MLPClassifier(solver='lbfgs', max_iter=20000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
+classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
 reading_test_cases()

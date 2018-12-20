@@ -17,17 +17,12 @@ def segment(image):
     imageGray[(imageGray > threshold)] = 255
     imageGray[(imageGray <= threshold)] = 0
 
-    # imageGray = cv2.erode(imageGray.copy(), np.ones((3, 3)), iterations=1)
-
-    # show_images([imageGray])
     top, bottom = extract_text(imageGray)
     imageGray = imageGray[top:bottom, :]
-    # show_images([imageGray])
 
     writer_lines = []
     line_start = 0
     foundALine = False
-    # imgName = 0
     for line_index in range(imageGray.shape[0]):
         values, count = np.unique(imageGray[line_index, :], return_counts=True)
         if len(values) == 1:
@@ -42,12 +37,9 @@ def segment(image):
             line_start = line_index
         else:
             if foundALine and percentageBlack < 1:
-                if line_index - line_start > (imageGray.shape[1] / 60):
+                if line_index - line_start > (imageGray.shape[0] / 60):
                     line = cv2.copyMakeBorder(imageGray[line_start:line_index, :].astype('uint8'), 1, 1, 1, 1,
                                               cv2.BORDER_CONSTANT, value=[255, 255, 255])
-                    # io.imsave('output/image' + str(imgName) + '.png', line)
-                    # imgName += 1
-                    # show_images([line])
                     writer_lines.append(line)
                 foundALine = False
     return writer_lines
@@ -62,7 +54,6 @@ def extract_text(img):
     horizontal = cv2.erode(horizontal, horizontalStructure)
     horizontal = 255 - horizontal
     horizontal /= 255
-    # show_images([horizontal])
     sum = np.sum(horizontal, axis=1)
     sum[sum < int(cols / 10)] = 0
     sum[sum > int(cols / 10)] = 1
@@ -72,4 +63,4 @@ def extract_text(img):
     top_boundary = half - np.argmax(sum[half:0:-1])
     bottom_boundary = half + np.argmax(sum[half:])
 
-    return top_boundary + 2, bottom_boundary-2
+    return top_boundary + 2, bottom_boundary - 2
