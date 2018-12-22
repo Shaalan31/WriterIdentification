@@ -1,4 +1,4 @@
-from flask import Flask , url_for , request,send_from_directory
+from flask import Flask  , request,send_from_directory
 import time
 import cv2
 import AdjustRotation as AR
@@ -32,5 +32,12 @@ def import_image():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER,filename,as_attachment=True)
+
+@app.route('/identify',methods=['GET', 'POST'])
+def identification():
+    print(request.text['combination'])
+    print(request.text['filename'])
+    #filename = UPLOAD_FOLDER+
+    return 'eshta',200
 
 app.run()
