@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 num_features = 18
 num_lines_per_class = 0
 startClass = 1
-endClass = 159
+endClass = 8
 training_dict = {}
 testing_dict = {}
 
@@ -27,7 +27,7 @@ def process_training_data():
     for class_number in range(startClass, endClass + 1):
         temp = np.asarray([])
         num_lines_per_class = 0
-        for filename in glob.glob('Samples/Class' + str(class_number) + '/*.png'):
+        for filename in glob.glob('ImageTestCases/Class' + str(class_number) + '/*.jpg'):
             print(filename)
             temp = np.append(temp, training(cv2.imread(filename)))
         training_dict[class_number] = adjustNaNValues(np.reshape(temp, (num_lines_per_class, num_features)))
@@ -36,7 +36,7 @@ def process_training_data():
 def process_test_data():
     for class_number in range(startClass, endClass + 1):
         temp = np.asarray([])
-        for filename in glob.glob('TestCases/testing' + str(class_number) + '.png'):
+        for filename in glob.glob('ImageTestCases/Testing/Test' + str(class_number) + '.jpg'):
             temp = test(cv2.imread(filename))
         testing_dict[class_number] = temp
 
@@ -50,7 +50,7 @@ def start(current_alpha, number_of_neurons):
 
     classifier = MLPClassifier(solver='lbfgs', max_iter=50000, alpha=current_alpha,
                                hidden_layer_sizes=(number_of_neurons, 18, 15, 12, 7,),
-                               random_state=int(time.time()))
+                               random_state=1545481387)
 
     for test_combination in classCombinations:
         print(test_combination)
@@ -89,7 +89,7 @@ def start(current_alpha, number_of_neurons):
     return accuracy
 
 
-def feature_extraction(example):
+def feature_extraction(example,imageShape):
     example = example.astype('uint8')
     example_copy = example.copy()
 
@@ -107,7 +107,7 @@ def feature_extraction(example):
     feature.extend(blob_threaded(contours, hierarchy))
 
     # feature 3, Connected Components
-    feature.extend(ConnectedComponents(contours, hierarchy, example_copy))
+    feature.extend(ConnectedComponents(contours, hierarchy, example_copy,imageShape))
 
     # feature 4, Disk Fractal
     feature.extend(DiskFractal(example_copy))
@@ -121,12 +121,12 @@ def test(image):
     if image.shape[0] > 3500:
         image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
 
-    # image = adjust_rotation(image=image)
+    image = adjust_rotation(image=image)
     writerLines = segment(image)
 
     num_testing_examples = len(writerLines)
     for line in writerLines:
-        all_features_test = np.append(all_features_test, feature_extraction(line))
+        all_features_test = np.append(all_features_test, feature_extraction(line,image.shape))
 
     return np.average(adjustNaNValues(np.reshape(all_features_test, (num_testing_examples, num_features))), axis=0)
 
@@ -138,7 +138,7 @@ def training(image):
     if image_height > 3500:
         image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image_height)))
 
-    # image = adjust_rotation(image=image)
+    image = adjust_rotation(image=image)
     writerLines = segment(image)
 
     num_lines = len(writerLines)
@@ -146,7 +146,7 @@ def training(image):
 
     all_features_class = np.asarray([])
     for line in writerLines:
-        all_features_class = np.append(all_features_class, feature_extraction(line))
+        all_features_class = np.append(all_features_class, feature_extraction(line,image.shape))
 
     return np.reshape(all_features_class, (1, num_lines * num_features))
 
