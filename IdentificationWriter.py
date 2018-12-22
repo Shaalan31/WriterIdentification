@@ -3,11 +3,13 @@ from AnglesHistogram import *
 from BlobsDetection import *
 from ConnectedComponents import *
 from DiskFractal import *
+from AdjustRotation import *
 import glob
 import warnings
 import time
 import random
 from sklearn.neural_network import MLPClassifier
+from itertools import combinations
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -44,8 +46,7 @@ def test(image, clf, mu, sigma):
     if image.shape[0] > 3500:
         image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image.shape[0])))
 
-    # image = adjust_rotation(image=image)
-    # show_images([image], ["rotation"])
+    image = adjust_rotation(image=image)
     writerLines = segment(image)
 
     num_testing_examples = 0
@@ -57,12 +58,6 @@ def test(image, clf, mu, sigma):
     all_features_test = (adjustNaNValues(
         np.reshape(all_features_test, (num_testing_examples, num_features))) - mu) / sigma
 
-    # Predict on each line
-    # predictions = []
-    # for example in all_features_test:
-    #     predictions.append(clf.predict(np.asarray(example).reshape(1, -1)))
-    # values, counts = np.unique(np.asarray(predictions), return_counts=True)
-    # return values[np.argmax(counts)]
     return clf.predict(np.average(all_features_test, axis=0).reshape(1, -1))
 
 
@@ -77,7 +72,7 @@ def training(image, class_num):
     if image_height > 3500:
         image = cv2.resize(src=image, dsize=(3500, round((3500 / image.shape[1]) * image_height)))
 
-    # image = adjust_rotation(image=image)
+    image = adjust_rotation(image=image)
     writerLines = segment(image)
 
     num_lines_per_class += len(writerLines)
@@ -116,6 +111,9 @@ def featureNormalize(X):
     return normalized_X, mean, deviation
 
 
+randomState = 1545481387
+
+
 def reading_test_cases():
     global all_features
     global temp
@@ -126,18 +124,24 @@ def reading_test_cases():
     results_array = []
     time_array = []
 
-    indices_array = ['01', '02', '03', '04', '05', '06', '07', '08', '09']
-    for i in range(10, 101):
-        indices_array.append(str(i))
+    label = 0
+    startClass = 1
+    endClass = 8
+    classCombinations = list(combinations(range(startClass, endClass + 1), r=3))
 
-    for index in indices_array:
+    total_cases = 0
+    total_correct = 0
+    for classCombination in classCombinations:
         try:
-            seconds = time.time()
-            test_combination = (1, 2, 3)
-            for class_number in test_combination:
+            # seconds = time.time()
+            labels = []
+            all_features = []
+            num_training_examples = 0
+
+            for class_number in classCombination:
                 num_lines_per_class = 0
                 all_features_class = np.asarray([])
-                for filename in glob.glob('data/' + index + '/' + str(class_number) + '/*.jpg'):
+                for filename in glob.glob('ImageTestCases/Class' + str(class_number) + '/*.jpg'):
                     print(filename)
                     temp = training(cv2.imread(filename), class_number)
                 all_features = np.append(all_features,
@@ -145,37 +149,33 @@ def reading_test_cases():
 
             # Normalization of features
             all_features, mu, sigma = featureNormalize(np.reshape(all_features, (num_training_examples, num_features)))
-
             classifier.fit(all_features, labels)
-            labels = []
-            all_features = []
-            num_training_examples = 0
-            total_cases = 0
-            total_correct = 0
-            for filename in glob.glob('data/' + index + '/test*.jpg'):
-                print(filename)
-                label = int(filename[len(filename) - 5])
-                prediction = test(cv2.imread(filename), classifier, mu, sigma)
-                print("label: " + str(label) + " prediction:" + str(prediction[0]))
-                total_cases += 1
-                if prediction[0] == label:
-                    total_correct += 1
-                results_array.append(str(prediction[0]) + '\n')
-                print("Accuracy = ", total_correct * 100 / total_cases, " %")
-            calculated_time = round(time.time() - seconds, 2)
-            print("-----------------------------------------------------------------")
-            print("Time:")
-            print(calculated_time)
-            time_array.append(str(calculated_time) + '\n')
-            print("-----------------------------------------------------------------")
-        except:
-            results_array.append(str(random.randint(1, 3)) + '\n')
-            time_array.append(str(0) + '\n')
 
-    time_file = open("time.txt", "w+")
+            for class_number in classCombination:
+                for filename in glob.glob('ImageTestCases/Testing/Test' + str(class_number) + '.jpg'):
+                    print(filename)
+                    label = int(filename[len(filename) - 5])
+                    prediction = test(cv2.imread(filename), classifier, mu, sigma)
+                    total_cases += 1
+                    print(prediction[0])
+                    if prediction[0] == label:
+                        total_correct += 1
+                    results_array.append(str(prediction[0]) + '\n')
+                    print("Accuracy = ", total_correct * 100 / total_cases, " %")
+        except:
+            print("EXCEPTIONN!!!")
+            prediction = str(random.randint(1, 3))
+            total_cases += 1
+            if prediction == label:
+                total_correct += 1
+            results_array.append(str(prediction) + '\n')
+            print("Accuracy = ", total_correct * 100 / total_cases, " %")
+            # time_array.append(str(0) + '\n')
+
+    # time_file = open("time.txt", "w+")
     results_file = open("results.txt", "w+")
-    time_file.writelines(time_array)
-    time_file.close()
+    # time_file.writelines(time_array)
+    # time_file.close()
     results_file.writelines(results_array)
     results_file.close()
 
@@ -190,5 +190,6 @@ num_features = 18
 num_lines_per_class = 0
 total_test_cases = 100
 
-classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=0.046041, hidden_layer_sizes=(22,), random_state=1)
+classifier = MLPClassifier(solver='lbfgs', max_iter=30000, alpha=0.046041, hidden_layer_sizes=(22, 18, 15, 12, 7,),
+                           random_state=randomState)
 reading_test_cases()
